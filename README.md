@@ -1,5 +1,5 @@
 # JABDDL
-
+Just Another BDD Library
 
 
 ## Getting started
