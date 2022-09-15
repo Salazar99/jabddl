@@ -33,3 +33,11 @@ struct vertex *old_or_new(char root, struct vertex *lst, struct vertex *rst);
 //@brief: Takes in input an expression and first variable and return the 
 //        pointer to the root of the robdd
 struct vertex *robdd_build(struct expr f, int i);
+
+
+//@input: unique_table is a pointer to the unique table of vertices;
+//        root is the pointer to the root of the vertex to analyse, 
+//        lst and rst are respectively the left and right subtree.         
+//@output: pointer to the vertex if found, otherwise nullptr;
+//@brief: Given a vertex, it checks if it is present inside the unique table and returns it
+struct vertex *lookup(struct entry_table *unique_table, char root, struct vertex *lst, struct vertex *rst);
