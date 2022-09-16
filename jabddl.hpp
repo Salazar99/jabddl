@@ -5,7 +5,7 @@
 #include <string>
 #include <optional>
 
-namespace jabbdl {
+namespace jabddl {
 
 struct variable { std::string name; };
 
@@ -45,8 +45,6 @@ struct expr {
 
 expr_ptr ite(expr_ptr& a, expr_ptr& b, expr_ptr& c);
 
-expr create_expr(const std::string& f);
-
 struct vertex;
 using vertex_ptr = std::shared_ptr<vertex>;
 
@@ -77,7 +75,7 @@ vertex_ptr old_or_new(variable root, vertex_ptr lst, vertex_ptr rst);
 ///@param i represent the first variable to be used for shannon expression   
 ///@brief: Takes in input an expression and first variable and return the 
 ///        pointer to the root of the robdd
-vertex_ptr robdd_build(expr f, int i);
+vertex_ptr robdd_build(expr_ptr f, int i, std::vector<variable> ord);
 
 
 ///@param unique_table is a pointer to the unique table of vertices;
@@ -93,4 +91,4 @@ std::optional<vertex_ptr> lookup(const std::vector<vertex_ptr>& unique_table, va
 expr compute(expr f, std::string var);
 
 
-} // namespace jabbd 
+} // namespace jabdd 

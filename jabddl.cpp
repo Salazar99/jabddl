@@ -1,9 +1,9 @@
-#include "jabbdl.hpp"
+#include "jabddl.hpp"
 
 #include <sstream>
 #include <iostream>
 
-namespace jabbdl {
+namespace jabddl {
 
 //unique table to represent the vertices of all robdds
 static std::vector<vertex_ptr> unique_table;
@@ -13,8 +13,8 @@ vertex_ptr v0 = std::make_shared<vertex>("v0");
 vertex_ptr v1 = std::make_shared<vertex>("v1");
 
 //0 and 1 variables
-auto v0_v = jabbdl::expr::make_var({"v0"});
-auto v1_v = jabbdl::expr::make_var({"v1"});
+auto v0_v = jabddl::expr::make_var({"v0"});
+auto v1_v = jabddl::expr::make_var({"v1"});
 
 vertex::vertex(const std::string& name)
 : root{{name}} { unique_table.push_back(v0);
@@ -114,7 +114,7 @@ vertex_ptr old_or_new(variable root, vertex_ptr lst, vertex_ptr rst){
 }
 
 expr_ptr evaluate(expr_ptr root, variable var, bool value) {
-    if(root->type == jabbdl::expr_type::Var && root->var.name.name == var.name){
+    if(root->type == jabddl::expr_type::Var && root->var.name.name == var.name){
               if(value)
                 root->var = v1_v->var;
               else
@@ -122,7 +122,7 @@ expr_ptr evaluate(expr_ptr root, variable var, bool value) {
     }
     
     switch(root->type){
-        case jabbdl::expr_type::Mul: {
+        case jabddl::expr_type::Mul: {
             auto l_res = evaluate(root->args.l, var, value);
             auto r_res = evaluate(root->args.r, var, value);
 
@@ -151,7 +151,7 @@ expr_ptr evaluate(expr_ptr root, variable var, bool value) {
 
             return root;
         } break;
-        case jabbdl::expr_type::Add:{
+        case jabddl::expr_type::Add:{
             auto l_res = evaluate(root->args.l, var, value);
             auto r_res = evaluate(root->args.r, var, value);
             
@@ -182,7 +182,7 @@ expr_ptr evaluate(expr_ptr root, variable var, bool value) {
 
         }    break;
 
-        case jabbdl::expr_type::Not:{
+        case jabddl::expr_type::Not:{
             if(root->var.name.name == "v0"){
                 root->var.name.name = "v1";
                 return root;
@@ -194,7 +194,7 @@ expr_ptr evaluate(expr_ptr root, variable var, bool value) {
             else return root;
         }break;
 
-        case jabbdl::expr_type::Var:{
+        case jabddl::expr_type::Var:{
             return root;
         }break;
 
@@ -229,7 +229,7 @@ vertex_ptr robdd_build(expr_ptr f, int i, std::vector<variable> ord) {
      vertex_ptr l,r;
      variable root;
 
-    if(f->type == jabbdl::expr_type::Var){
+    if(f->type == jabddl::expr_type::Var){
         if(f->var.name.name == "v0")
             return v0;
         if(f->var.name.name == "v1")
@@ -255,4 +255,4 @@ std::optional<vertex_ptr> lookup(const std::vector<vertex_ptr>& unique_table, va
     return std::nullopt;
 }
 
-} // namespace jabbdl
+} // namespace jabddl
