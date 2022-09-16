@@ -60,31 +60,37 @@ struct vertex {
     /// @param l left subtree
     /// @param r right subtree
     vertex(variable root, vertex_ptr l, vertex_ptr r);
+
+    explicit vertex(const std::string& name);
 };
 
-//@input: root is the pointer to the root of the vertex to analyse, 
-//        lst and rst are respectively the left and right subtree.
-//@output: pointer to a vertex representing the one given in input
-//@brief: The function takes a vertex in input and return:
-//          a new vertex if the one in input does not exists at the moment or
-//          a pointer to the vertex if it is already present
+///@param root is the pointer to the root of the vertex to analyse, 
+///@param lst left subtree.
+///@param rst right subtree. 
+///@brief The function takes a vertex in input and return:
+///          a new vertex if the one in input does not exists at the moment or
+///          a pointer to the vertex if it is already present
 vertex_ptr old_or_new(variable root, vertex_ptr lst, vertex_ptr rst);
 
 
-//@input: "f" is the expression on wich the bdd must be built,
-//        "i" represent the first variable to be used for shannon expression   
-//@output: pointer to the vertex of the robbd
-//@brief: Takes in input an expression and first variable and return the 
-//        pointer to the root of the robdd
+///@param f is the expression on wich the bdd must be built,
+///@param i represent the first variable to be used for shannon expression   
+///@brief: Takes in input an expression and first variable and return the 
+///        pointer to the root of the robdd
 vertex_ptr robdd_build(expr f, int i);
 
 
-//@input: unique_table is a pointer to the unique table of vertices;
-//        root is the pointer to the root of the vertex to analyse, 
-//        lst and rst are respectively the left and right subtree.         
-//@output: pointer to the vertex if found, otherwise nullptr;
-//@brief: Given a vertex, it checks if it is present inside the unique table and returns it
+///@param unique_table is a pointer to the unique table of vertices;
+///@param root is the pointer to the root of the vertex to analyse, 
+///@param lst left subtree.
+///@param rst right subtree.       
+///@brief Given a vertex, it checks if it is present inside the unique table and returns it
 std::optional<vertex_ptr> lookup(const std::vector<vertex_ptr>& unique_table, variable root, vertex_ptr lst, vertex_ptr rst);
+
+/// @param f expression to be evaluated 
+/// @param var variable on wich we want to evaluate the expression
+/// @brief Evaluates the expression f with respect to the variable var
+expr compute(expr f, std::string var);
 
 
 } // namespace jabbd 
