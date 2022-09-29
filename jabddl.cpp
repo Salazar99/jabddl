@@ -1,6 +1,7 @@
 #include "jabddl.hpp"
 
 #include <sstream>
+#include <cassert>
 #include <iostream>
 
 namespace jabddl {
@@ -24,33 +25,33 @@ vertex::vertex(const std::string& name)
 expr::expr() : type{expr_type::Var} { }
 expr::~expr() { }
 
-expr_ptr expr::make_add(expr_ptr& a, expr_ptr& b) {
-    auto res = std::make_shared<expr>();
+expr_ptr expr::make_add(expr_ptr a, expr_ptr b) {
+    auto res = new expr{};
     res->type = expr_type::Add;
     res->args.l = a;
     res->args.r = b;
     return res;
 }
-expr_ptr expr::make_mul(expr_ptr& a, expr_ptr& b) {
-    auto res = std::make_shared<expr>();
+expr_ptr expr::make_mul(expr_ptr a, expr_ptr b) {
+    auto res = new expr{};
     res->type = expr_type::Mul;
     res->args.l = a;
     res->args.r = b;
     return res;
 }
-expr_ptr expr::make_neg(expr_ptr& n) {
-    auto res = std::make_shared<expr>();
+expr_ptr expr::make_neg(expr_ptr n) {
+    auto res = new expr{};
     res->type = expr_type::Not;
     res->arg.c = n;
     return res;
 }
 expr_ptr expr::make_var(variable var) {
-    auto res = std::make_shared<expr>();
+    auto res = new expr{};
     res->var.name = var;
     return res;
 };
 
-expr_ptr ite(expr_ptr& a, expr_ptr& b, expr_ptr& c) {
+expr_ptr ite(expr_ptr a, expr_ptr b, expr_ptr c) {
 
     // If a then b
     auto choise1 = expr::make_mul(a, b);
@@ -63,7 +64,7 @@ expr_ptr ite(expr_ptr& a, expr_ptr& b, expr_ptr& c) {
     return expr::make_add(choise1, choise2);
 }
 
-static void print_rec(std::stringstream& stream, const expr_ptr& expr) {
+static void print_rec(std::stringstream& stream, const expr_ptr expr) {
     switch (expr->type) {
         case expr_type::Add: {
             stream << "(";
@@ -89,7 +90,7 @@ static void print_rec(std::stringstream& stream, const expr_ptr& expr) {
     }
 }
 
-void expr::print(const expr_ptr& expr) {
+void expr::print(const expr_ptr expr) {
     std::stringstream stream;
     print_rec(stream, expr);
     std::cout << stream.str() << std::endl;
@@ -127,26 +128,26 @@ expr_ptr evaluate(expr_ptr root, variable var, bool value) {
             auto r_res = evaluate(root->args.r, var, value);
 
             //0 * 0 = 0
-            if (l_res == v0_v || r_res == v0_v)
+            if(l_res->var.name.name == v0_v->var.name.name || r_res->var.name.name == v0_v->var.name.name)
                 return v0_v;
 
             // 1 * 1 = 1
-            if(l_res == v1_v || r_res == v1_v)
+            if(l_res->var.name.name == v1_v->var.name.name && r_res->var.name.name == v1_v->var.name.name)
                 return v1_v;
 
             // 1 * x = x
-            if (l_res == v1_v)
+            if (l_res->var.name.name == v1_v->var.name.name)
                 return r_res;
 
             // x * 1 = x
-            if (r_res == v1_v)
+            if (r_res->var.name.name == v1_v->var.name.name)
                 return l_res;
 
             //x * 0 = 0
-            if(l_res == v0_v)
+            if(l_res->var.name.name == v0_v->var.name.name)
                 return v0_v;
 
-            if(r_res == v0_v)
+            if(r_res->var.name.name == v0_v->var.name.name)
                 return v0_v;
 
             return root;
@@ -156,40 +157,36 @@ expr_ptr evaluate(expr_ptr root, variable var, bool value) {
             auto r_res = evaluate(root->args.r, var, value);
             
             //0 + 0 = 0
-            if(l_res == v0_v && r_res == v0_v)
+            if(l_res->var.name.name == v0_v->var.name.name && r_res->var.name.name == v0_v->var.name.name)
                 return v0_v;
             //1 + 1 = 1
-            if(l_res == v1_v && r_res == v1_v)
+            if(l_res->var.name.name == v1_v->var.name.name && r_res->var.name.name == v1_v->var.name.name)
                 return v1_v;    
 
             //0 + x = x
-            if(l_res == v0_v)
+            if(l_res->var.name.name == v0_v->var.name.name)
                 return r_res;
 
-             if(r_res == v0_v)
+             if(r_res->var.name.name == v0_v->var.name.name)
                 return l_res;
 
             //1 + x = 1 
-            if(l_res == v1_v)
+            if(l_res->var.name.name == v1_v->var.name.name)
                 return v1_v;    
 
-            if(r_res == v1_v)
-                return v1_v;    
-            
-            //x + x = x
-            if(r_res == l_res)
-                return r_res;
+            if(r_res->var.name.name == v1_v->var.name.name)
+                return v1_v;               
 
+            return root;
         }    break;
 
         case jabddl::expr_type::Not:{
-            if(root->var.name.name == "v0"){
-                root->var.name.name = "v1";
-                return root;
+            evaluate(root->arg.c, var, value);
+            if(root->arg.c->var.name.name == v0_v->var.name.name){
+                return v1_v;
             }    
-            else if(root->var.name.name == "v1"){
-                root->var.name.name == "v0";
-                return root;
+            else if(root->arg.c->var.name.name == v1_v->var.name.name){
+                return v0_v;
             }  
             else return root;
         }break;
@@ -205,40 +202,56 @@ expr_ptr evaluate(expr_ptr root, variable var, bool value) {
     } 
 }
 
-
-expr_ptr copy_expr(const expr_ptr& root) {
-    auto result = std::make_shared<expr>();
+expr_ptr copy_expr_rec(const expr_ptr root) {
+    
+    // Copied expr
+    expr_ptr result = new expr{};
     result->type = root->type;
+
+    // Copy childrens
     switch (result->type) {
         case expr_type::Add:
         case expr_type::Mul: {
-            result->args.l = copy_expr(root->args.l);
-            result->args.r = copy_expr(root->args.r);
+            result->args.l = copy_expr_rec(root->args.l);
+            result->args.r = copy_expr_rec(root->args.r);
         } break;
         case expr_type::Not: {
-            result->arg.c = copy_expr(root->arg.c);
+            result->arg.c = copy_expr_rec(root->arg.c);
         } break;
         case expr_type::Var: {
             result->var.name = root->var.name;
         } break;
     }
+
     return result;
 }
 
-vertex_ptr robdd_build(expr_ptr f, int i, std::vector<variable> ord) {
+vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<variable>& ord) {
      vertex_ptr l,r;
      variable root;
 
     if(f->type == jabddl::expr_type::Var){
-        if(f->var.name.name == "v0")
+        if(f->var.name.name == v0_v->var.name.name)
             return v0;
-        if(f->var.name.name == "v1")
+        if(f->var.name.name == v1_v->var.name.name)
             return v1; 
     }
     else{
-        root = ord[i];
-        l = robdd_build(evaluate(copy_expr(f), ord[i], true), i+1, ord);
-        r = robdd_build(evaluate(copy_expr(f), ord[i], false), i+1, ord);
+
+        assert(i < ord.size());
+        root.name = ord[i].name;
+        
+        expr_ptr l_copy = copy_expr_rec(f);
+        l = robdd_build(evaluate(l_copy, ord[i], true), i+1, ord);
+        std::cout<< "f valutata per: " << ord[i].name <<" positivo\n";
+        expr::print(l_copy);
+        //delete_expr(l_copy);
+
+        expr_ptr r_copy = copy_expr_rec(f);
+        r = robdd_build(evaluate(r_copy, ord[i], false), i+1, ord);
+        std::cout<< "f valutata per: " << ord[i].name <<" positivo\n";
+        expr::print(r_copy);
+        //delete_expr(r_copy);
     }
     if(l->root.name == r->root.name && l->lsubtree == r->lsubtree && l->rsubtree == r->rsubtree)
         return l;

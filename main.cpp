@@ -14,13 +14,12 @@ int main() {
 
     auto arg1 = jabddl::expr::make_add(f1, x1);
     auto arg2 = jabddl::expr::make_add(f2, x2);
+    
     auto f3 = jabddl::ite(f2, arg1, arg2);
-
-    jabddl::expr_ptr func = std::shared_ptr<jabddl::expr>(&*f3);
-    std::vector<jabddl::variable>  ordine = {jabddl::variable{"x1"},jabddl::variable{"x2"},jabddl::variable{"x3"},jabddl::variable{"x4"}};
-
-    auto f = jabddl::robdd_build(func,1,ordine);
-
     jabddl::expr::print(f3);
+
+    std::vector<jabddl::variable>  ordine = {jabddl::variable{"x1"},jabddl::variable{"x2"},jabddl::variable{"x3"},jabddl::variable{"x4"}};
+    auto f = jabddl::robdd_build(f3,0,ordine);
+
     return 0;
 }

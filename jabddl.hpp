@@ -17,7 +17,7 @@ enum class expr_type {
 };
 
 struct expr;
-using expr_ptr = std::shared_ptr<expr>;
+using expr_ptr = expr*;
 
 struct expr_arg_2 { expr_ptr l; expr_ptr r; };
 struct expr_arg_1 { expr_ptr c; };
@@ -35,15 +35,15 @@ struct expr {
     explicit expr();
     ~expr();
 
-    static expr_ptr make_add(expr_ptr& a, expr_ptr& b);
-    static expr_ptr make_mul(expr_ptr& a, expr_ptr& b);
-    static expr_ptr make_neg(expr_ptr& n);
+    static expr_ptr make_add(expr_ptr a, expr_ptr b);
+    static expr_ptr make_mul(expr_ptr a, expr_ptr b);
+    static expr_ptr make_neg(expr_ptr n);
     static expr_ptr make_var(variable var);
 
-    static void print(const expr_ptr& expr);
+    static void print(const expr_ptr expr);
 };
 
-expr_ptr ite(expr_ptr& a, expr_ptr& b, expr_ptr& c);
+expr_ptr ite(expr_ptr a, expr_ptr b, expr_ptr c);
 
 struct vertex;
 using vertex_ptr = std::shared_ptr<vertex>;
@@ -75,7 +75,7 @@ vertex_ptr old_or_new(variable root, vertex_ptr lst, vertex_ptr rst);
 ///@param i represent the first variable to be used for shannon expression   
 ///@brief: Takes in input an expression and first variable and return the 
 ///        pointer to the root of the robdd
-vertex_ptr robdd_build(expr_ptr f, int i, std::vector<variable> ord);
+vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<variable>& ord);
 
 
 ///@param unique_table is a pointer to the unique table of vertices;
