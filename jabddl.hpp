@@ -48,6 +48,11 @@ expr_ptr ite(expr_ptr a, expr_ptr b, expr_ptr c);
 struct vertex;
 using vertex_ptr = std::shared_ptr<vertex>;
 
+//0 and 1 leaf 
+static inline vertex_ptr v0 = std::make_shared<vertex>("v0");
+static inline vertex_ptr v1 = std::make_shared<vertex>("v1");
+
+
 //structure to represent a vertex of the bdd
 struct vertex {
     variable root;
@@ -89,6 +94,8 @@ std::optional<vertex_ptr> lookup(const std::vector<vertex_ptr>& unique_table, va
 /// @param var variable on wich we want to evaluate the expression
 /// @brief Evaluates the expression f with respect to the variable var
 expr compute(expr f, std::string var);
+
+bool vertex_compare(vertex_ptr vertex1,vertex_ptr vertex2);
 
 
 } // namespace jabdd 

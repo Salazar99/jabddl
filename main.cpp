@@ -15,11 +15,27 @@ int main() {
     auto arg1 = jabddl::expr::make_add(f1, x1);
     auto arg2 = jabddl::expr::make_add(f2, x2);
     
+    /*  
     auto f3 = jabddl::ite(f2, arg1, arg2);
     jabddl::expr::print(f3);
 
     std::vector<jabddl::variable>  ordine = {jabddl::variable{"x1"},jabddl::variable{"x2"},jabddl::variable{"x3"},jabddl::variable{"x4"}};
     auto f = jabddl::robdd_build(f3,0,ordine);
+    */
+    /*
+    jabddl::vertex_ptr vrt1 = std::make_shared<jabddl::vertex>("x1");
+    jabddl::vertex_ptr vrt2 = std::make_shared<jabddl::vertex>("x1");
+    
+    vrt1->lsubtree = jabddl::v1;
+    vrt1->rsubtree = jabddl::v0;
+    vrt2->lsubtree = jabddl::v1;
+    vrt2->rsubtree = jabddl::v0;
+
+    if(jabddl::vertex_compare(vrt1,vrt2))
+        printf("they are equal");
+    else
+        printf("They are not equal");
+    */
 
     return 0;
 }

@@ -9,10 +9,6 @@ namespace jabddl {
 //unique table to represent the vertices of all robdds
 static std::vector<vertex_ptr> unique_table;
 
-//0 and 1 leaf 
-vertex_ptr v0 = std::make_shared<vertex>("v0");
-vertex_ptr v1 = std::make_shared<vertex>("v1");
-
 //0 and 1 variables
 auto v0_v = jabddl::expr::make_var({"v0"});
 auto v1_v = jabddl::expr::make_var({"v1"});
@@ -226,6 +222,20 @@ expr_ptr copy_expr_rec(const expr_ptr root) {
     return result;
 }
 
+bool vertex_compare(vertex_ptr vertex1,vertex_ptr vertex2){
+    bool result = false;
+    if((vertex1->root.name == "v0" && vertex2->root.name == "v0") || (vertex1->root.name == "v1" && vertex2->root.name == "v1")){
+        return true;
+    }
+    else if((vertex1->root.name == "v1" && vertex2->root.name == "v0") || (vertex1->root.name == "v0" && vertex2->root.name == "v1")){
+        return false;
+    }
+    else{
+        result = vertex_compare(vertex1->lsubtree,vertex2->lsubtree) && vertex_compare(vertex1->rsubtree,vertex2->rsubtree) && (vertex1->root.name == vertex2->root.name);
+    }
+    return result;
+}
+
 vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<variable>& ord) {
      vertex_ptr l,r;
      variable root;
@@ -253,7 +263,7 @@ vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<variable>& ord) {
         expr::print(r_copy);
         //delete_expr(r_copy);
     }
-    if(l->root.name == r->root.name && l->lsubtree == r->lsubtree && l->rsubtree == r->rsubtree)
+    if(l->root.name == r->root.name && vertex_compare(r->lsubtree, r->rsubtree)/*l->lsubtree == r->lsubtree && l->rsubtree == r->rsubtree*/)
         return l;
     else
         return old_or_new(root,l,r);
