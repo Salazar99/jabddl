@@ -1,6 +1,7 @@
 #include "jabddl.hpp"
 
 int main() {
+    jabddl::initialize();
 
     auto x1 = jabddl::expr::make_var({"x1"});
     auto x2 = jabddl::expr::make_var({"x2"});
@@ -15,13 +16,13 @@ int main() {
     auto arg1 = jabddl::expr::make_add(f1, x1);
     auto arg2 = jabddl::expr::make_add(f2, x2);
     
-    /*  
+
     auto f3 = jabddl::ite(f2, arg1, arg2);
     jabddl::expr::print(f3);
 
     std::vector<jabddl::variable>  ordine = {jabddl::variable{"x1"},jabddl::variable{"x2"},jabddl::variable{"x3"},jabddl::variable{"x4"}};
     auto f = jabddl::robdd_build(f3,0,ordine);
-    */
+    jabddl::vertex::print(f);
     /*
     jabddl::vertex_ptr vrt1 = std::make_shared<jabddl::vertex>("x1");
     jabddl::vertex_ptr vrt2 = std::make_shared<jabddl::vertex>("x1");

@@ -7,6 +7,8 @@
 
 namespace jabddl {
 
+void initialize();
+
 struct variable { std::string name; };
 
 enum class expr_type {
@@ -17,6 +19,7 @@ enum class expr_type {
 };
 
 struct expr;
+struct vertex;
 using expr_ptr = expr*;
 
 struct expr_arg_2 { expr_ptr l; expr_ptr r; };
@@ -65,6 +68,8 @@ struct vertex {
     vertex(variable root, vertex_ptr l, vertex_ptr r);
 
     explicit vertex(const std::string& name);
+
+    static void print(const vertex_ptr vert);
 };
 
 ///@param root is the pointer to the root of the vertex to analyse, 

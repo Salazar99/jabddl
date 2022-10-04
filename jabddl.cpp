@@ -9,14 +9,17 @@ namespace jabddl {
 //unique table to represent the vertices of all robdds
 static std::vector<vertex_ptr> unique_table;
 
+void initialize() {
+    unique_table.push_back(v0);
+    unique_table.push_back(v1);
+}
+
 //0 and 1 variables
 auto v0_v = jabddl::expr::make_var({"v0"});
 auto v1_v = jabddl::expr::make_var({"v1"});
 
 vertex::vertex(const std::string& name)
-: root{{name}} { unique_table.push_back(v0);
-                 unique_table.push_back(v1);
-                }
+: root{{name}} {}
 
 expr::expr() : type{expr_type::Var} { }
 expr::~expr() { }
@@ -92,6 +95,31 @@ void expr::print(const expr_ptr expr) {
     std::cout << stream.str() << std::endl;
 }
 
+static void print_vert_rec(std::stringstream& stream, vertex_ptr vert, int depth){
+     ++depth;
+    if(vert->root.name == "v0" || vert->root.name == "v1"){
+        stream << "\n";
+        for(int i = 1; i < depth; i++) stream << "--";
+        stream << "[" << vert->root.name << "]";
+    }else{
+       
+        stream << "\n";
+        for(int i = 1; i < depth; i++) stream << "--";
+        stream << "[" << vert->root.name << "]";
+        print_vert_rec(stream, vert->lsubtree,depth );
+        print_vert_rec(stream,vert->rsubtree, depth);
+       
+    }
+   
+}
+
+
+void vertex::print(const vertex_ptr vert){
+    std::stringstream stream;
+    print_vert_rec(stream, vert, 0);
+    std::cout << stream.str() <<std::endl;
+}
+
 vertex::vertex(variable root, vertex_ptr l, vertex_ptr r) 
 : root{root}, lsubtree{l}, rsubtree{r} { }
 
@@ -103,6 +131,12 @@ vertex_ptr old_or_new(variable root, vertex_ptr lst, vertex_ptr rst){
         return *result;
     else{
         /*create a new vertex*/
+        auto l_tree = lookup(unique_table,lst->root,lst->lsubtree,lst->rsubtree);
+        auto r_tree = lookup(unique_table,rst->root,rst->lsubtree,rst->rsubtree);
+        if(l_tree.has_value())
+            lst = l_tree.value(); 
+        if(r_tree.has_value())
+            rst = r_tree.value();   
         v = std::make_shared<vertex>(root, lst, rst);
         //adds it to the unique table
         unique_table.push_back(v);
@@ -116,75 +150,79 @@ expr_ptr evaluate(expr_ptr root, variable var, bool value) {
                 root->var = v1_v->var;
               else
                 root->var = v0_v->var;
+              return root;
     }
     
     switch(root->type){
         case jabddl::expr_type::Mul: {
-            auto l_res = evaluate(root->args.l, var, value);
-            auto r_res = evaluate(root->args.r, var, value);
+            root->args.l = evaluate(root->args.l, var, value);
+            root->args.r = evaluate(root->args.r, var, value);
 
             //0 * 0 = 0
-            if(l_res->var.name.name == v0_v->var.name.name || r_res->var.name.name == v0_v->var.name.name)
+            if(root->args.l->var.name.name == v0_v->var.name.name || root->args.r->var.name.name == v0_v->var.name.name)
                 return v0_v;
 
             // 1 * 1 = 1
-            if(l_res->var.name.name == v1_v->var.name.name && r_res->var.name.name == v1_v->var.name.name)
+            if(root->args.l->var.name.name == v1_v->var.name.name && root->args.r->var.name.name == v1_v->var.name.name)
                 return v1_v;
 
             // 1 * x = x
-            if (l_res->var.name.name == v1_v->var.name.name)
-                return r_res;
+            if (root->args.l->var.name.name == v1_v->var.name.name)
+                return root->args.r;
 
             // x * 1 = x
-            if (r_res->var.name.name == v1_v->var.name.name)
-                return l_res;
+            if (root->args.r->var.name.name == v1_v->var.name.name)
+                return root->args.l;
 
             //x * 0 = 0
-            if(l_res->var.name.name == v0_v->var.name.name)
+            if(root->args.l->var.name.name == v0_v->var.name.name)
                 return v0_v;
 
-            if(r_res->var.name.name == v0_v->var.name.name)
+            if(root->args.r->var.name.name == v0_v->var.name.name)
                 return v0_v;
 
+            
             return root;
         } break;
         case jabddl::expr_type::Add:{
-            auto l_res = evaluate(root->args.l, var, value);
-            auto r_res = evaluate(root->args.r, var, value);
+            root->args.l = evaluate(root->args.l, var, value);
+            root->args.r = evaluate(root->args.r, var, value);
             
             //0 + 0 = 0
-            if(l_res->var.name.name == v0_v->var.name.name && r_res->var.name.name == v0_v->var.name.name)
+            if(root->args.l->var.name.name == v0_v->var.name.name && root->args.r->var.name.name == v0_v->var.name.name)
                 return v0_v;
             //1 + 1 = 1
-            if(l_res->var.name.name == v1_v->var.name.name && r_res->var.name.name == v1_v->var.name.name)
+            if(root->args.l->var.name.name == v1_v->var.name.name && root->args.r->var.name.name == v1_v->var.name.name)
                 return v1_v;    
 
             //0 + x = x
-            if(l_res->var.name.name == v0_v->var.name.name)
-                return r_res;
+            if(root->args.l->var.name.name == v0_v->var.name.name)
+                return root->args.r;
 
-             if(r_res->var.name.name == v0_v->var.name.name)
-                return l_res;
+             if(root->args.r->var.name.name == v0_v->var.name.name)
+                return root->args.l;
 
             //1 + x = 1 
-            if(l_res->var.name.name == v1_v->var.name.name)
+            if(root->args.l->var.name.name == v1_v->var.name.name)
                 return v1_v;    
 
-            if(r_res->var.name.name == v1_v->var.name.name)
+            if(root->args.r->var.name.name == v1_v->var.name.name)
                 return v1_v;               
 
             return root;
         }    break;
 
         case jabddl::expr_type::Not:{
-            evaluate(root->arg.c, var, value);
-            if(root->arg.c->var.name.name == v0_v->var.name.name){
-                return v1_v;
-            }    
-            else if(root->arg.c->var.name.name == v1_v->var.name.name){
-                return v0_v;
-            }  
-            else return root;
+            auto res = evaluate(root->arg.c, var, value);
+            if(res->type == jabddl::expr_type::Var){
+                if(res->var.name.name == v0_v->var.name.name){
+                    return v1_v;
+                }    
+                else if(res->var.name.name == v1_v->var.name.name){
+                    return v0_v;
+                }  
+            }
+            return root;
         }break;
 
         case jabddl::expr_type::Var:{
@@ -230,7 +268,7 @@ bool vertex_compare(vertex_ptr vertex1,vertex_ptr vertex2){
     else if((vertex1->root.name == "v1" && vertex2->root.name == "v0") || (vertex1->root.name == "v0" && vertex2->root.name == "v1")){
         return false;
     }
-    else{
+    else if(vertex1->root.name != "v0" && vertex2->root.name != "v1" && vertex1->root.name != "v1" && vertex2->root.name != "v0"){
         result = vertex_compare(vertex1->lsubtree,vertex2->lsubtree) && vertex_compare(vertex1->rsubtree,vertex2->rsubtree) && (vertex1->root.name == vertex2->root.name);
     }
     return result;
@@ -263,7 +301,8 @@ vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<variable>& ord) {
         expr::print(r_copy);
         //delete_expr(r_copy);
     }
-    if(l->root.name == r->root.name && vertex_compare(r->lsubtree, r->rsubtree)/*l->lsubtree == r->lsubtree && l->rsubtree == r->rsubtree*/)
+   
+    if(vertex_compare(l,r)/*l->lsubtree == r->lsubtree && l->rsubtree == r->rsubtree*/)
         return l;
     else
         return old_or_new(root,l,r);
