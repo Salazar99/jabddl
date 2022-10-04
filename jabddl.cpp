@@ -99,12 +99,14 @@ static void print_vert_rec(std::stringstream& stream, vertex_ptr vert, int depth
      ++depth;
     if(vert->root.name == "v0" || vert->root.name == "v1"){
         stream << "\n";
-        for(int i = 1; i < depth; i++) stream << "--";
+        for(int i = 1; i < depth-1; i++) stream << " |";
+        if(depth >1) stream << " L";
         stream << "[" << vert->root.name << "]";
     }else{
        
         stream << "\n";
-        for(int i = 1; i < depth; i++) stream << "--";
+        for(int i = 1; i < depth-1; i++) stream << " |";
+        if(depth >1) stream << " +";
         stream << "[" << vert->root.name << "]";
         print_vert_rec(stream, vert->lsubtree,depth );
         print_vert_rec(stream,vert->rsubtree, depth);
