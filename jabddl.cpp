@@ -14,7 +14,7 @@ void initialize() {
     unique_table.push_back(v1);
 }
 
-//0 and 1 variables
+//0 and 1 variables used to valuate expressions
 auto v0_v = jabddl::expr::make_var({"v0"});
 auto v1_v = jabddl::expr::make_var({"v1"});
 
@@ -288,7 +288,7 @@ vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<variable>& ord) {
     }
     else{
 
-        assert(i < ord.size());
+        //assert(i < ord.size());
         root.name = ord[i].name;
         
         expr_ptr l_copy = copy_expr_rec(f);
@@ -309,6 +309,28 @@ vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<variable>& ord) {
     else
         return old_or_new(root,l,r);
 
+}
+
+vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std::vector<variable>& ord){
+     vertex_ptr l,r;
+     variable root;
+
+    if(f->root.name  == "v1" )
+        return g;
+    if(f->root.name == "v0" )
+        return h;
+    else if (g->root.name == "v1" && h->root.name == "v0")
+        return f;
+    else{
+        root.name = ord[i].name;
+        l = apply_ite(/*f,g,h evaluated for "root" positive*/,i+1,ord);
+        r = apply_ite(/*f,g,h evaluated for "root" negative*/,i+1,ord);
+        
+        if(vertex_compare(l,r))
+            return l;
+        else 
+            return old_or_new(root,l,r);
+    }
 }
 
 std::optional<vertex_ptr> lookup(const std::vector<vertex_ptr>& unique_table, variable root, vertex_ptr lst, vertex_ptr rst){

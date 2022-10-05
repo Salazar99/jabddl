@@ -7,6 +7,7 @@
 
 namespace jabddl {
 
+/// @brief Create and add to unique_table the 0 and 1 leaves
 void initialize();
 
 struct variable { std::string name; };
@@ -61,10 +62,11 @@ struct vertex {
     variable root;
     vertex_ptr lsubtree, rsubtree;
 
-    /// @brief Constructs a new vertex
+   
     /// @param root variable of the vertex
     /// @param l left subtree
     /// @param r right subtree
+    /// @brief Constructs a new vertex
     vertex(variable root, vertex_ptr l, vertex_ptr r);
 
     explicit vertex(const std::string& name);
@@ -100,7 +102,11 @@ std::optional<vertex_ptr> lookup(const std::vector<vertex_ptr>& unique_table, va
 /// @brief Evaluates the expression f with respect to the variable var
 expr compute(expr f, std::string var);
 
+///@param vertex1 pointer to a vertex structure;
+///@param vertex2 pointer to a vertex structure;       
+///@brief Given two vertex pointers, it compares them to enstablish if they're equal.
 bool vertex_compare(vertex_ptr vertex1,vertex_ptr vertex2);
 
+vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std::vector<variable>& ord);
 
 } // namespace jabdd 
