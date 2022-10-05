@@ -311,6 +311,26 @@ vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<variable>& ord) {
 
 }
 
+vertex_prt evaluate_vertex(vertex_ptr root, variable var, bool value){
+    if(root->root.name == var.name){
+        if(value)
+            return root->lsubtree;
+        else 
+            return root->rsubtree;
+    }else if(root->root.name == "v0" || root->root.name == "v1")
+        return root; 
+    else{
+        root->lsubtree = evaluate_vertex(root->lsubtree, var, value);
+        root->rsubtree = evaluate_vertex(root->rsubtree, var, value);
+
+
+
+    }
+
+
+
+}
+
 vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std::vector<variable>& ord){
      vertex_ptr l,r;
      variable root;
