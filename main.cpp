@@ -18,11 +18,19 @@ int main() {
     
 
     auto f3 = jabddl::ite(f2, arg1, arg2);
-    jabddl::expr::print(f3);
+    //jabddl::expr::print(f3);
 
     std::vector<jabddl::variable>  ordine = {jabddl::variable{"x1"},jabddl::variable{"x2"},jabddl::variable{"x3"},jabddl::variable{"x4"}};
-    auto f = jabddl::robdd_build(f3,0,ordine);
-    jabddl::vertex::print(f);
+    std::vector<jabddl::variable>  ordine2 = {jabddl::variable{"x1"},jabddl::variable{"x2"}};
+    
+    //auto f = jabddl::robdd_build(f3,0,ordine);
+    //jabddl::vertex::print(f);
+
+    auto h = jabddl::robdd_build(f1,0,ordine2);
+    jabddl::expr::print(f1);
+    jabddl::vertex::print(h);
+
+
     /*
     jabddl::vertex_ptr vrt1 = std::make_shared<jabddl::vertex>("x1");
     jabddl::vertex_ptr vrt2 = std::make_shared<jabddl::vertex>("x1");

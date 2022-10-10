@@ -107,6 +107,10 @@ expr compute(expr f, std::string var);
 ///@brief Given two vertex pointers, it compares them to enstablish if they're equal.
 bool vertex_compare(vertex_ptr vertex1,vertex_ptr vertex2);
 
+///@param f pointer to a vertex structure that represent f;
+///@param g pointer to a vertex structure that represent g;       
+///@param h pointer to a vertex structure that represent h;
+///@brief Given three functions it apply ite procedue to obtain a new function = f*g + !f*h.
 vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std::vector<variable>& ord);
 
 } // namespace jabdd 

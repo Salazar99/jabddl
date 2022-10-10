@@ -280,7 +280,7 @@ vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<variable>& ord) {
      vertex_ptr l,r;
      variable root;
 
-    if(f->type == jabddl::expr_type::Var){
+    if(f->type == jabddl::expr_type::Var && (f->var.name.name == v0_v->var.name.name || f->var.name.name == v1_v->var.name.name)){
         if(f->var.name.name == v0_v->var.name.name)
             return v0;
         if(f->var.name.name == v1_v->var.name.name)
@@ -293,25 +293,24 @@ vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<variable>& ord) {
         
         expr_ptr l_copy = copy_expr_rec(f);
         l = robdd_build(evaluate(l_copy, ord[i], true), i+1, ord);
-        std::cout<< "f valutata per: " << ord[i].name <<" positivo\n";
-        expr::print(l_copy);
+        //std::cout<< "f valutata per: " << ord[i].name <<" positivo\n";
+        //expr::print(l_copy);
         //delete_expr(l_copy);
 
         expr_ptr r_copy = copy_expr_rec(f);
         r = robdd_build(evaluate(r_copy, ord[i], false), i+1, ord);
-        std::cout<< "f valutata per: " << ord[i].name <<" positivo\n";
-        expr::print(r_copy);
+        //std::cout<< "f valutata per: " << ord[i].name <<" positivo\n";
+        //expr::print(r_copy);
         //delete_expr(r_copy);
-    }
-   
+    
     if(vertex_compare(l,r)/*l->lsubtree == r->lsubtree && l->rsubtree == r->rsubtree*/)
         return l;
     else
         return old_or_new(root,l,r);
-
+    }
 }
 
-vertex_prt evaluate_vertex(vertex_ptr root, variable var, bool value){
+vertex_ptr evaluate_vertex(vertex_ptr root, variable var, bool value){
     if(root->root.name == var.name){
         if(value)
             return root->lsubtree;
@@ -322,13 +321,8 @@ vertex_prt evaluate_vertex(vertex_ptr root, variable var, bool value){
     else{
         root->lsubtree = evaluate_vertex(root->lsubtree, var, value);
         root->rsubtree = evaluate_vertex(root->rsubtree, var, value);
-
-
-
+        return root;
     }
-
-
-
 }
 
 vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std::vector<variable>& ord){
@@ -343,8 +337,8 @@ vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std:
         return f;
     else{
         root.name = ord[i].name;
-        l = apply_ite(/*f,g,h evaluated for "root" positive*/,i+1,ord);
-        r = apply_ite(/*f,g,h evaluated for "root" negative*/,i+1,ord);
+        l = apply_ite(evaluate_vertex(f,ord[i],true),evaluate_vertex(g,ord[i],true),evaluate_vertex(h,ord[i],true),i+1,ord);
+        r = apply_ite(evaluate_vertex(f,ord[i],false),evaluate_vertex(g,ord[i],false),evaluate_vertex(h,ord[i],false),i+1,ord);
         
         if(vertex_compare(l,r))
             return l;
