@@ -310,7 +310,7 @@ vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<variable>& ord) {
     }
 }
 
-vertex_ptr evaluate_vertex(vertex_ptr root, variable var, bool value){
+vertex_ptr vertex_cofactor(vertex_ptr root, variable var, bool value){
     if(root->root.name == var.name){
         if(value)
             return root->lsubtree;
@@ -319,8 +319,8 @@ vertex_ptr evaluate_vertex(vertex_ptr root, variable var, bool value){
     }else if(root->root.name == "v0" || root->root.name == "v1")
         return root; 
     else{
-        root->lsubtree = evaluate_vertex(root->lsubtree, var, value);
-        root->rsubtree = evaluate_vertex(root->rsubtree, var, value);
+        root->lsubtree = vertex_cofactor(root->lsubtree, var, value);
+        root->rsubtree = vertex_cofactor(root->rsubtree, var, value);
         return root;
     }
 }
@@ -337,8 +337,8 @@ vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std:
         return f;
     else{
         root.name = ord[i].name;
-        l = apply_ite(evaluate_vertex(f,ord[i],true),evaluate_vertex(g,ord[i],true),evaluate_vertex(h,ord[i],true),i+1,ord);
-        r = apply_ite(evaluate_vertex(f,ord[i],false),evaluate_vertex(g,ord[i],false),evaluate_vertex(h,ord[i],false),i+1,ord);
+        l = apply_ite(vertex_cofactor(f,ord[i],true),vertex_cofactor(g,ord[i],true),vertex_cofactor(h,ord[i],true),i+1,ord);
+        r = apply_ite(vertex_cofactor(f,ord[i],false),vertex_cofactor(g,ord[i],false),vertex_cofactor(h,ord[i],false),i+1,ord);
         
         if(vertex_compare(l,r))
             return l;
