@@ -9,6 +9,7 @@ int main() {
     auto x4 = jabddl::expr::make_var({"x4"});
     auto v0 = jabddl::expr::make_var({"v0"});
     auto v1 = jabddl::expr::make_var({"v1"});
+    
 
     auto f1 = jabddl::ite(x1, x2, v0);
     auto f2 = jabddl::ite(x3, x4, v1);
@@ -23,8 +24,10 @@ int main() {
     std::vector<jabddl::variable>  ordine = {jabddl::variable{"x1"},jabddl::variable{"x2"},jabddl::variable{"x3"},jabddl::variable{"x4"}};
     std::vector<jabddl::variable>  ordine2 = {jabddl::variable{"x1"},jabddl::variable{"x2"}};
     
-    auto f4 = jabddl::robdd_build(f3,0,ordine);
-    jabddl::vertex::print(f4);
+    auto f4 = jabddl::robdd_build_comp(f1,0,ordine2);
+    jabddl::print_table(jabddl::unique_table);
+    //jabddl::vertex::print(f4);
+/*
 
     auto h = jabddl::robdd_build(arg2,0,ordine);
     auto g = jabddl::robdd_build(arg1,0,ordine);
@@ -33,7 +36,7 @@ int main() {
     //jabddl::vertex::print(h);
     auto x = jabddl::apply_ite(f,g,h,0,ordine);
     jabddl::vertex::print(x);
-
+    */
     /*
     jabddl::vertex_ptr vrt1 = std::make_shared<jabddl::vertex>("x1");
     jabddl::vertex_ptr vrt2 = std::make_shared<jabddl::vertex>("x1");

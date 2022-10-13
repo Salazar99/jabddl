@@ -7,7 +7,7 @@
 namespace jabddl {
 
 //unique table to represent the vertices of all robdds
-static std::vector<vertex_ptr> unique_table;
+std::vector<vertex_ptr> unique_table;
 
 void initialize() {
     unique_table.push_back(v0);
@@ -122,8 +122,13 @@ void vertex::print(const vertex_ptr vert){
     std::cout << stream.str() <<std::endl;
 }
 
+//constructor for normal vertexes
 vertex::vertex(variable root, vertex_ptr l, vertex_ptr r) 
 : root{root}, lsubtree{l}, rsubtree{r} { }
+
+//constructor for complemented edges vertexes
+vertex::vertex(variable root, vertex_ptr l, vertex_ptr r, bool complemented_l, bool complemented_r)
+: root{root}, lsubtree{l}, rsubtree{r}, complemented_l{complemented_l}, complemented_r{complemented_r} {}
 
 vertex_ptr old_or_new(variable root, vertex_ptr lst, vertex_ptr rst){
     
@@ -140,6 +145,27 @@ vertex_ptr old_or_new(variable root, vertex_ptr lst, vertex_ptr rst){
         if(r_tree.has_value())
             rst = r_tree.value();   
         v = std::make_shared<vertex>(root, lst, rst);
+        //adds it to the unique table
+        unique_table.push_back(v);
+        return v;
+    }
+}
+
+vertex_ptr old_or_new_comp(variable root, vertex_ptr lst, vertex_ptr rst,bool l_comp, bool r_comp){
+    
+    vertex_ptr v;
+    auto result = lookup_comp(unique_table, root, lst, rst, l_comp,r_comp);
+    if (result.has_value())
+        return *result;
+    else{
+        /*create a new vertex*/
+        auto l_tree = lookup_comp(unique_table,lst->root,lst->lsubtree,lst->rsubtree,l_comp,r_comp);
+        auto r_tree = lookup_comp(unique_table,rst->root,rst->lsubtree,rst->rsubtree,l_comp,r_comp);
+        if(l_tree.has_value())
+            lst = l_tree.value(); 
+        if(r_tree.has_value())
+            rst = r_tree.value();   
+        v = std::make_shared<vertex>(root, lst, rst, l_comp, r_comp);
         //adds it to the unique table
         unique_table.push_back(v);
         return v;
@@ -236,6 +262,7 @@ expr_ptr evaluate(expr_ptr root, variable var, bool value) {
             return root;
         }
     } 
+    exit(-1);
 }
 
 expr_ptr copy_expr_rec(const expr_ptr root) {
@@ -255,7 +282,7 @@ expr_ptr copy_expr_rec(const expr_ptr root) {
             result->arg.c = copy_expr_rec(root->arg.c);
         } break;
         case expr_type::Var: {
-            result->var.name = root->var.name;
+            result->var.name.name = root->var.name.name;
         } break;
     }
 
@@ -291,23 +318,92 @@ vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<variable>& ord) {
         //assert(i < ord.size());
         root.name = ord[i].name;
         
-        expr_ptr l_copy = copy_expr_rec(f);
-        l = robdd_build(evaluate(l_copy, ord[i], true), i+1, ord);
+        auto l_copy = std::unique_ptr<expr>(copy_expr_rec(f));
+        l = robdd_build(evaluate(l_copy.get(), ord[i], true), i+1, ord);
         //std::cout<< "f valutata per: " << ord[i].name <<" positivo\n";
         //expr::print(l_copy);
         //delete_expr(l_copy);
 
-        expr_ptr r_copy = copy_expr_rec(f);
-        r = robdd_build(evaluate(r_copy, ord[i], false), i+1, ord);
+        auto r_copy = std::unique_ptr<expr>(copy_expr_rec(f));
+        r = robdd_build(evaluate(r_copy.get(), ord[i], false), i+1, ord);
         //std::cout<< "f valutata per: " << ord[i].name <<" positivo\n";
         //expr::print(r_copy);
         //delete_expr(r_copy);
     
-    if(vertex_compare(l,r)/*l->lsubtree == r->lsubtree && l->rsubtree == r->rsubtree*/)
-        return l;
-    else
-        return old_or_new(root,l,r);
+        if(vertex_compare(l,r)/*l->lsubtree == r->lsubtree && l->rsubtree == r->rsubtree*/)
+            return l;
+        else return old_or_new(root,l,r);
+        
     }
+
+    exit(-1);
+}
+
+bool vertex_compare_comp(vertex_ptr vertex1,vertex_ptr vertex2){
+    bool result = false;
+    //Base case
+    if(vertex1->root.name == "v1" && vertex2->root.name == "v1"){
+        return true;
+    }
+    //roots have same name but one of the two is complemented and the other no
+    else if((vertex1->root.name == vertex2->root.name && (!(vertex1->complemented_l && vertex2->complemented_l) || !(vertex1->complemented_r && vertex2->complemented_r))) || (vertex1->root.name != vertex2->root.name)){
+        return false;
+    }
+    //same name and same complementation, need to check for subtrees
+    else{
+        result = vertex_compare(vertex1->lsubtree,vertex2->lsubtree) && vertex_compare(vertex1->rsubtree,vertex2->rsubtree) && (vertex1->root.name == vertex2->root.name);
+    }
+    return result;
+}
+
+
+vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<variable>& ord) {
+     vertex_ptr l,r;
+     variable root;
+     bool lcomp = false;
+     bool rcomp = false;
+
+    if(f->type == jabddl::expr_type::Var && (f->var.name.name == v0_v->var.name.name || f->var.name.name == v1_v->var.name.name)){
+        if(f->var.name.name == v0_v->var.name.name)
+            return v0;
+        if(f->var.name.name == v1_v->var.name.name)
+            return v1; 
+    }
+    else{
+
+        //assert(i < ord.size());
+        root.name = ord[i].name;
+        
+        auto l_copy = std::unique_ptr<expr>(copy_expr_rec(f));
+        l = robdd_build_comp(evaluate(l_copy.get(), ord[i], true), i+1, ord);
+      
+        //if l points to v0, it is replaced by v1 and marked as complemented
+        if(l->root.name == v0->root.name){
+            lcomp = true;
+            l = v1;
+        }
+        //std::cout<< "f valutata per: " << ord[i].name <<" positivo\n";
+        //expr::print(l_copy);
+        //delete_expr(l_copy);
+
+        auto r_copy = std::unique_ptr<expr>(copy_expr_rec(f));
+        r = robdd_build_comp(evaluate(r_copy.get(), ord[i], false), i+1, ord);
+       
+        //if r points to v0, it is replaced by v1 and marked as complemented
+        if(r->root.name == v0->root.name){
+            rcomp = true;
+            r = v1;
+        }
+        //std::cout<< "f valutata per: " << ord[i].name <<" positivo\n";
+        //expr::print(r_copy);
+        //delete_expr(r_copy);
+
+        if(vertex_compare_comp(l,r) && (lcomp == rcomp)/*l->lsubtree == r->lsubtree && l->rsubtree == r->rsubtree*/)
+            return l;
+        return old_or_new_comp(root,l,r,lcomp,rcomp);
+    }
+
+    exit(-1);
 }
 
 vertex_ptr vertex_cofactor(vertex_ptr root, variable var, bool value){
@@ -353,6 +449,36 @@ std::optional<vertex_ptr> lookup(const std::vector<vertex_ptr>& unique_table, va
             return std::make_optional<vertex_ptr>(vertex);
     }
     return std::nullopt;
+}
+
+std::optional<vertex_ptr> lookup_comp(const std::vector<vertex_ptr>& unique_table, variable root, vertex_ptr lst, vertex_ptr rst, bool lcomp, bool rcomp){
+    for (auto& vertex : unique_table) {
+        if (vertex->root.name == root.name && vertex->lsubtree == lst && vertex->rsubtree == rst && vertex->complemented_l == lcomp && vertex->complemented_r == rcomp)
+            return std::make_optional<vertex_ptr>(vertex);
+    }
+    return std::nullopt;
+}
+
+void print_table(std::vector<vertex_ptr> unique_table){
+    
+    int i = 0;
+    for(const auto& v : unique_table){
+        
+        char lbuf[16], rbuf[16];
+        if (v->root.name != "v1" && v->root.name != "v0") {
+            snprintf(lbuf, 16, "%c%p", char((v->complemented_l) ? '!' : ' '), v->lsubtree.get());
+            snprintf(rbuf, 16, "%c%p", char((v->complemented_r) ? '!' : ' '), v->rsubtree.get());
+        }
+        else{
+            snprintf(lbuf, 16, "---");
+            snprintf(rbuf, 16, "---");
+        }
+
+        printf("%2d] %2s %p L-> %s R-> %s\n", 
+            i, v->root.name.c_str(), v.get(), lbuf, rbuf);
+        
+        i += 1;
+    }
 }
 
 } // namespace jabddl

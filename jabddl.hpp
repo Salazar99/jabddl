@@ -58,18 +58,21 @@ using vertex_ptr = std::shared_ptr<vertex>;
 static inline vertex_ptr v0 = std::make_shared<vertex>("v0");
 static inline vertex_ptr v1 = std::make_shared<vertex>("v1");
 
+//unique table to represent the vertices of all robdds
+extern std::vector<vertex_ptr> unique_table;
 
 //structure to represent a vertex of the bdd
 struct vertex {
     variable root;
     vertex_ptr lsubtree, rsubtree;
-
+    bool complemented_l,complemented_r;
    
     /// @param root variable of the vertex
     /// @param l left subtree
     /// @param r right subtree
     /// @brief Constructs a new vertex
     vertex(variable root, vertex_ptr l, vertex_ptr r);
+    vertex(variable root, vertex_ptr l, vertex_ptr r, bool complemented_l, bool complemented_r);
 
     explicit vertex(const std::string& name);
 
@@ -84,6 +87,16 @@ struct vertex {
 ///          a pointer to the vertex if it is already present
 vertex_ptr old_or_new(variable root, vertex_ptr lst, vertex_ptr rst);
 
+///@param root is the pointer to the root of the vertex to analyse, 
+///@param lst left subtree.
+///@param rst right subtree. 
+///@brief The function takes a vertex in input and return:
+///          a new vertex if the one in input does not exists at the moment or
+///          a pointer to the vertex if it is already present.
+///       It works with complemented edges.
+vertex_ptr old_or_new_comp(variable root, vertex_ptr lst, vertex_ptr rst);
+
+
 
 ///@param f is the expression on wich the bdd must be built,
 ///@param i represent the first variable to be used for shannon expression   
@@ -92,12 +105,28 @@ vertex_ptr old_or_new(variable root, vertex_ptr lst, vertex_ptr rst);
 vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<variable>& ord);
 
 
+///@param f is the expression on wich the bdd must be built,
+///@param i represent the first variable to be used for shannon expression   
+///@brief: Takes in input an expression and first variable and return the 
+///        pointer to the root of the robdd 
+///        Works with complemented edges
+vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<variable>& ord);
+
 ///@param unique_table is a pointer to the unique table of vertices;
 ///@param root is the pointer to the root of the vertex to analyse, 
 ///@param lst left subtree.
 ///@param rst right subtree.       
 ///@brief Given a vertex, it checks if it is present inside the unique table and returns it
 std::optional<vertex_ptr> lookup(const std::vector<vertex_ptr>& unique_table, variable root, vertex_ptr lst, vertex_ptr rst);
+
+///@param unique_table is a pointer to the unique table of vertices;
+///@param root is the pointer to the root of the vertex to analyse, 
+///@param lst left subtree.
+///@param rst right subtree.       
+///@brief Given a vertex, it checks if it is present inside the unique table and returns it.
+///       It workds with complemented edges.
+std::optional<vertex_ptr> lookup_comp(const std::vector<vertex_ptr>& unique_table, variable root, vertex_ptr lst, vertex_ptr rst, bool lcomp, bool rcomp);
+
 
 /// @param f expression to be evaluated 
 /// @param var variable on wich we want to evaluate the expression
@@ -109,10 +138,26 @@ expr compute(expr f, std::string var);
 ///@brief Given two vertex pointers, it compares them to enstablish if they're equal.
 bool vertex_compare(vertex_ptr vertex1,vertex_ptr vertex2);
 
+///@param vertex1 pointer to a vertex structure;
+///@param vertex2 pointer to a vertex structure;       
+///@brief Given two vertex pointers, it compares them to enstablish if they're equal.
+bool vertex_compare_comp(vertex_ptr vertex1,vertex_ptr vertex2);
+
 ///@param f pointer to a vertex structure that represent f;
 ///@param g pointer to a vertex structure that represent g;       
 ///@param h pointer to a vertex structure that represent h;
 ///@brief Given three functions it apply ite procedue to obtain a new function = f*g + !f*h.
 vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std::vector<variable>& ord);
+
+///@param f pointer to a vertex structure that represent f;
+///@param g pointer to a vertex structure that represent g;       
+///@param h pointer to a vertex structure that represent h;
+///@brief Given three functions it apply ite procedue to obtain a new function = f*g + !f*h.
+///       Works with complemented edges.
+vertex_ptr apply_ite_comp(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std::vector<variable>& ord);
+
+/// @brief Prints the unique table 
+/// @param unique_table 
+void print_table( std::vector<vertex_ptr> unique_table);
 
 } // namespace jabdd 
