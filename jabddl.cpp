@@ -481,4 +481,6 @@ void print_table(std::vector<vertex_ptr> unique_table){
     }
 }
 
+
+
 } // namespace jabddl

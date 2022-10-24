@@ -160,4 +160,6 @@ vertex_ptr apply_ite_comp(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const
 /// @param unique_table 
 void print_table( std::vector<vertex_ptr> unique_table);
 
+
+void parse_input(std::string file, std::vector<jabddl::variable> &order, std::vector<std::string> &expr);
 } // namespace jabdd 

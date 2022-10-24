@@ -1,7 +1,9 @@
 #include "jabddl.hpp"
 
-int main() {
+int main(int argc, char **argv) {
     jabddl::initialize();
+    std::vector<jabddl::variable>  order;
+    std::vector<jabddl::expr_ptr> expr;
 
     auto x1 = jabddl::expr::make_var({"x1"});
     auto x2 = jabddl::expr::make_var({"x2"});
