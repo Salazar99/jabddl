@@ -1,9 +1,8 @@
 #include "jabddl.hpp"
-#include<iostream>
+#include <iostream>
 
 int main(int argc, char **argv) {
     jabddl::initialize();
-    std::vector<jabddl::variable>  order;
     std::vector<jabddl::expr_ptr> expr;
 
     auto x1 = jabddl::expr::make_var({"x1"});
@@ -15,21 +14,34 @@ int main(int argc, char **argv) {
     
 
     auto f1 = jabddl::ite(x1, x2, v0);
-    auto f2 = jabddl::ite(x3, x4, v1);
-
-    auto arg1 = jabddl::expr::make_add(f1, x1);
-    auto arg2 = jabddl::expr::make_add(f2, x2);
+    auto f2 = jabddl::ite(x2, x1, v0);
     
 
-    auto f3 = jabddl::ite(f2, arg1, arg2);
-    //jabddl::expr::print(f3);
+    std::cout << "Funzione 1";
+    jabddl::expr::print(f1);
 
-    std::vector<jabddl::variable>  ordine = {jabddl::variable{"x1"},jabddl::variable{"x2"},jabddl::variable{"x3"},jabddl::variable{"x4"}};
-    std::vector<jabddl::variable>  ordine2 = {jabddl::variable{"x1"},jabddl::variable{"x2"}};
+    std::cout << "Funzione 2";
+    jabddl::expr::print(f2);
+
+    std::vector<std::string>  ordine = {{"x1"},{"x2"}};
+    std::vector<std::string>  ordine2 = {{"x4"},{"x3"},{"x2"},{"x1"}};
     
-    auto f4 = jabddl::robdd_build_comp(f1,0,ordine2);
+    auto f4 = jabddl::robdd_build(f1,0,ordine);
+    auto f5 = jabddl::robdd_build(f2,0,ordine);
+
+    jabddl::print_truth_table(f4, ordine);
+
+
+    std::cout << "UNIQUE TABLE" <<std::endl;
     jabddl::print_table(jabddl::unique_table);
-    //jabddl::vertex::print(f4);
+
+    std::cout <<std::endl << "robdd for function order 1:" <<std::endl;
+    jabddl::vertex::print(f4);
+    std::cout <<std::endl << "robdd for function order 2:" <<std::endl;
+    jabddl::vertex::print(f5);
+
+
+
 /*
 
     auto h = jabddl::robdd_build(arg2,0,ordine);

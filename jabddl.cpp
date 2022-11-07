@@ -3,6 +3,7 @@
 #include <sstream>
 #include <cassert>
 #include <iostream>
+#include <cmath>
 
 namespace jabddl {
 
@@ -15,14 +16,17 @@ void initialize() {
 }
 
 //0 and 1 variables used to valuate expressions
-auto v0_v = jabddl::expr::make_var({"v0"});
-auto v1_v = jabddl::expr::make_var({"v1"});
+auto v0_v = std::string("v0");
+auto v1_v = std::string("v1");
 
 vertex::vertex(const std::string& name)
 : root{{name}} {}
 
 expr::expr() : type{expr_type::Var} { }
-expr::~expr() { }
+expr::~expr() {
+    if (type == expr_type::Var)
+        delete var.name;
+}
 
 expr_ptr expr::make_add(expr_ptr a, expr_ptr b) {
     auto res = new expr{};
@@ -44,9 +48,9 @@ expr_ptr expr::make_neg(expr_ptr n) {
     res->arg.c = n;
     return res;
 }
-expr_ptr expr::make_var(variable var) {
+expr_ptr expr::make_var(const std::string& var) {
     auto res = new expr{};
-    res->var.name = var;
+    res->var.name = new std::string(var);
     return res;
 };
 
@@ -84,7 +88,7 @@ static void print_rec(std::stringstream& stream, const expr_ptr expr) {
             print_rec(stream, expr->arg.c);
         } break;
         case expr_type::Var: {
-            stream << expr->var.name.name;
+            stream << *expr->var.name;
         } break;
     }
 }
@@ -97,17 +101,17 @@ void expr::print(const expr_ptr expr) {
 
 static void print_vert_rec(std::stringstream& stream, vertex_ptr vert, int depth){
      ++depth;
-    if(vert->root.name == "v0" || vert->root.name == "v1"){
+    if(vert->root == "v0" || vert->root == "v1"){
         stream << "\n";
         for(int i = 1; i < depth-1; i++) stream << " |";
         if(depth >1) stream << " L";
-        stream << "[" << vert->root.name << "]";
+        stream << "[" << vert->root << "]";
     }else{
        
         stream << "\n";
         for(int i = 1; i < depth-1; i++) stream << " |";
         if(depth >1) stream << " +";
-        stream << "[" << vert->root.name << "]";
+        stream << "[" << vert->root << "]";
         print_vert_rec(stream, vert->lsubtree,depth );
         print_vert_rec(stream,vert->rsubtree, depth);
        
@@ -123,14 +127,14 @@ void vertex::print(const vertex_ptr vert){
 }
 
 //constructor for normal vertexes
-vertex::vertex(variable root, vertex_ptr l, vertex_ptr r) 
+vertex::vertex(const std::string& root, vertex_ptr l, vertex_ptr r) 
 : root{root}, lsubtree{l}, rsubtree{r} { }
 
 //constructor for complemented edges vertexes
-vertex::vertex(variable root, vertex_ptr l, vertex_ptr r, bool complemented_l, bool complemented_r)
+vertex::vertex(const std::string& root, vertex_ptr l, vertex_ptr r, bool complemented_l, bool complemented_r)
 : root{root}, lsubtree{l}, rsubtree{r}, complemented_l{complemented_l}, complemented_r{complemented_r} {}
 
-vertex_ptr old_or_new(variable root, vertex_ptr lst, vertex_ptr rst){
+vertex_ptr old_or_new(const std::string& root, vertex_ptr lst, vertex_ptr rst){
     
     vertex_ptr v;
     auto result = lookup(unique_table, root, lst, rst);
@@ -151,7 +155,7 @@ vertex_ptr old_or_new(variable root, vertex_ptr lst, vertex_ptr rst){
     }
 }
 
-vertex_ptr old_or_new_comp(variable root, vertex_ptr lst, vertex_ptr rst,bool l_comp, bool r_comp){
+vertex_ptr old_or_new_comp(const std::string& root, vertex_ptr lst, vertex_ptr rst,bool l_comp, bool r_comp){
     
     vertex_ptr v;
     auto result = lookup_comp(unique_table, root, lst, rst, l_comp,r_comp);
@@ -172,12 +176,12 @@ vertex_ptr old_or_new_comp(variable root, vertex_ptr lst, vertex_ptr rst,bool l_
     }
 }
 
-expr_ptr evaluate(expr_ptr root, variable var, bool value) {
-    if(root->type == jabddl::expr_type::Var && root->var.name.name == var.name){
+expr_ptr evaluate(expr_ptr root, const std::string& var, bool value) {
+    if(root->type == jabddl::expr_type::Var && *root->var.name == var){
               if(value)
-                root->var = v1_v->var;
+                root->var.name = new std::string(v1_v);
               else
-                root->var = v0_v->var;
+                root->var.name = new std::string(v0_v);
               return root;
     }
     
@@ -187,27 +191,27 @@ expr_ptr evaluate(expr_ptr root, variable var, bool value) {
             root->args.r = evaluate(root->args.r, var, value);
 
             //0 * 0 = 0
-            if(root->args.l->var.name.name == v0_v->var.name.name || root->args.r->var.name.name == v0_v->var.name.name)
-                return v0_v;
+            if(*root->args.l->var.name == v0_v || *root->args.r->var.name == v0_v)
+                return expr::make_var(v0_v);
 
             // 1 * 1 = 1
-            if(root->args.l->var.name.name == v1_v->var.name.name && root->args.r->var.name.name == v1_v->var.name.name)
-                return v1_v;
+            if(*root->args.l->var.name == v1_v && *root->args.r->var.name == v1_v)
+                return  expr::make_var(v1_v);
 
             // 1 * x = x
-            if (root->args.l->var.name.name == v1_v->var.name.name)
+            if (*root->args.l->var.name == v1_v)
                 return root->args.r;
 
             // x * 1 = x
-            if (root->args.r->var.name.name == v1_v->var.name.name)
+            if (*root->args.r->var.name == v1_v)
                 return root->args.l;
 
             //x * 0 = 0
-            if(root->args.l->var.name.name == v0_v->var.name.name)
-                return v0_v;
+            if(*root->args.l->var.name == v0_v)
+                return expr::make_var(v0_v);
 
-            if(root->args.r->var.name.name == v0_v->var.name.name)
-                return v0_v;
+            if(*root->args.r->var.name == v0_v)
+                return expr::make_var(v0_v);
 
             
             return root;
@@ -217,25 +221,25 @@ expr_ptr evaluate(expr_ptr root, variable var, bool value) {
             root->args.r = evaluate(root->args.r, var, value);
             
             //0 + 0 = 0
-            if(root->args.l->var.name.name == v0_v->var.name.name && root->args.r->var.name.name == v0_v->var.name.name)
-                return v0_v;
+            if(*root->args.l->var.name == v0_v && *root->args.r->var.name == v0_v)
+                return expr::make_var(v0_v);
             //1 + 1 = 1
-            if(root->args.l->var.name.name == v1_v->var.name.name && root->args.r->var.name.name == v1_v->var.name.name)
-                return v1_v;    
+            if(*root->args.l->var.name == v1_v && *root->args.r->var.name == v1_v)
+                return expr::make_var(v1_v);    
 
             //0 + x = x
-            if(root->args.l->var.name.name == v0_v->var.name.name)
+            if(*root->args.l->var.name == v0_v)
                 return root->args.r;
 
-             if(root->args.r->var.name.name == v0_v->var.name.name)
+             if(*root->args.r->var.name == v0_v)
                 return root->args.l;
 
             //1 + x = 1 
-            if(root->args.l->var.name.name == v1_v->var.name.name)
-                return v1_v;    
+            if(*root->args.l->var.name == v1_v)
+                return expr::make_var(v1_v);    
 
-            if(root->args.r->var.name.name == v1_v->var.name.name)
-                return v1_v;               
+            if(*root->args.r->var.name == v1_v)
+                return expr::make_var(v1_v);              
 
             return root;
         }    break;
@@ -243,11 +247,11 @@ expr_ptr evaluate(expr_ptr root, variable var, bool value) {
         case jabddl::expr_type::Not:{
             auto res = evaluate(root->arg.c, var, value);
             if(res->type == jabddl::expr_type::Var){
-                if(res->var.name.name == v0_v->var.name.name){
-                    return v1_v;
+                if(*res->var.name == v0_v){
+                    return expr::make_var(v1_v);
                 }    
-                else if(res->var.name.name == v1_v->var.name.name){
-                    return v0_v;
+                else if(*res->var.name == v1_v){
+                    return expr::make_var(v0_v);
                 }  
             }
             return root;
@@ -275,6 +279,7 @@ expr_ptr copy_expr_rec(const expr_ptr root) {
     switch (result->type) {
         case expr_type::Add:
         case expr_type::Mul: {
+
             result->args.l = copy_expr_rec(root->args.l);
             result->args.r = copy_expr_rec(root->args.r);
         } break;
@@ -282,7 +287,7 @@ expr_ptr copy_expr_rec(const expr_ptr root) {
             result->arg.c = copy_expr_rec(root->arg.c);
         } break;
         case expr_type::Var: {
-            result->var.name.name = root->var.name.name;
+            result->var.name = new std::string(*root->var.name);
         } break;
     }
 
@@ -291,32 +296,32 @@ expr_ptr copy_expr_rec(const expr_ptr root) {
 
 bool vertex_compare(vertex_ptr vertex1,vertex_ptr vertex2){
     bool result = false;
-    if((vertex1->root.name == "v0" && vertex2->root.name == "v0") || (vertex1->root.name == "v1" && vertex2->root.name == "v1")){
+    if((vertex1->root == "v0" && vertex2->root == "v0") || (vertex1->root == "v1" && vertex2->root == "v1")){
         return true;
     }
-    else if((vertex1->root.name == "v1" && vertex2->root.name == "v0") || (vertex1->root.name == "v0" && vertex2->root.name == "v1")){
+    else if((vertex1->root == "v1" && vertex2->root == "v0") || (vertex1->root == "v0" && vertex2->root == "v1")){
         return false;
     }
-    else if(vertex1->root.name != "v0" && vertex2->root.name != "v1" && vertex1->root.name != "v1" && vertex2->root.name != "v0"){
-        result = vertex_compare(vertex1->lsubtree,vertex2->lsubtree) && vertex_compare(vertex1->rsubtree,vertex2->rsubtree) && (vertex1->root.name == vertex2->root.name);
+    else if(vertex1->root != "v0" && vertex2->root != "v1" && vertex1->root != "v1" && vertex2->root != "v0"){
+        result = vertex_compare(vertex1->lsubtree,vertex2->lsubtree) && vertex_compare(vertex1->rsubtree,vertex2->rsubtree) && (vertex1->root == vertex2->root);
     }
     return result;
 }
 
-vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<variable>& ord) {
+vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<std::string>& ord) {
      vertex_ptr l,r;
-     variable root;
+     std::string root;
 
-    if(f->type == jabddl::expr_type::Var && (f->var.name.name == v0_v->var.name.name || f->var.name.name == v1_v->var.name.name)){
-        if(f->var.name.name == v0_v->var.name.name)
+    if(f->type == jabddl::expr_type::Var && (*f->var.name == v0_v || *f->var.name == v1_v)){
+        if(*f->var.name == v0_v)
             return v0;
-        if(f->var.name.name == v1_v->var.name.name)
+        if(*f->var.name == v1_v)
             return v1; 
     }
     else{
 
         //assert(i < ord.size());
-        root.name = ord[i].name;
+        root = ord[i];
         
         auto l_copy = std::unique_ptr<expr>(copy_expr_rec(f));
         l = robdd_build(evaluate(l_copy.get(), ord[i], true), i+1, ord);
@@ -342,43 +347,43 @@ vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<variable>& ord) {
 bool vertex_compare_comp(vertex_ptr vertex1,vertex_ptr vertex2){
     bool result = false;
     //Base case
-    if(vertex1->root.name == "v1" && vertex2->root.name == "v1"){
+    if(vertex1->root == "v1" && vertex2->root == "v1"){
         return true;
     }
     //roots have same name but one of the two is complemented and the other no
-    else if((vertex1->root.name == vertex2->root.name && (!(vertex1->complemented_l && vertex2->complemented_l) || !(vertex1->complemented_r && vertex2->complemented_r))) || (vertex1->root.name != vertex2->root.name)){
+    else if((vertex1->root == vertex2->root && (!(vertex1->complemented_l && vertex2->complemented_l) || !(vertex1->complemented_r && vertex2->complemented_r))) || (vertex1->root != vertex2->root)){
         return false;
     }
     //same name and same complementation, need to check for subtrees
     else{
-        result = vertex_compare(vertex1->lsubtree,vertex2->lsubtree) && vertex_compare(vertex1->rsubtree,vertex2->rsubtree) && (vertex1->root.name == vertex2->root.name);
+        result = vertex_compare(vertex1->lsubtree,vertex2->lsubtree) && vertex_compare(vertex1->rsubtree,vertex2->rsubtree) && (vertex1->root == vertex2->root);
     }
     return result;
 }
 
 
-vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<variable>& ord) {
+vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& ord) {
      vertex_ptr l,r;
-     variable root;
+     std::string root;
      bool lcomp = false;
      bool rcomp = false;
 
-    if(f->type == jabddl::expr_type::Var && (f->var.name.name == v0_v->var.name.name || f->var.name.name == v1_v->var.name.name)){
-        if(f->var.name.name == v0_v->var.name.name)
+    if(f->type == jabddl::expr_type::Var && (*f->var.name == v0_v || *f->var.name == v1_v)){
+        if(*f->var.name == v0_v)
             return v0;
-        if(f->var.name.name == v1_v->var.name.name)
+        if(*f->var.name == v1_v)
             return v1; 
     }
     else{
 
         //assert(i < ord.size());
-        root.name = ord[i].name;
+        root = ord[i];
         
         auto l_copy = std::unique_ptr<expr>(copy_expr_rec(f));
         l = robdd_build_comp(evaluate(l_copy.get(), ord[i], true), i+1, ord);
       
         //if l points to v0, it is replaced by v1 and marked as complemented
-        if(l->root.name == v0->root.name){
+        if(l->root == v0->root){
             lcomp = true;
             l = v1;
         }
@@ -390,7 +395,7 @@ vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<variable>& ord)
         r = robdd_build_comp(evaluate(r_copy.get(), ord[i], false), i+1, ord);
        
         //if r points to v0, it is replaced by v1 and marked as complemented
-        if(r->root.name == v0->root.name){
+        if(r->root == v0->root){
             rcomp = true;
             r = v1;
         }
@@ -406,13 +411,13 @@ vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<variable>& ord)
     exit(-1);
 }
 
-vertex_ptr vertex_cofactor(vertex_ptr root, variable var, bool value){
-    if(root->root.name == var.name){
+vertex_ptr vertex_cofactor(vertex_ptr root, const std::string& var, bool value){
+    if(root->root == var){
         if(value)
             return root->lsubtree;
         else 
             return root->rsubtree;
-    }else if(root->root.name == "v0" || root->root.name == "v1")
+    }else if(root->root == "v0" || root->root == "v1")
         return root; 
     else{
         root->lsubtree = vertex_cofactor(root->lsubtree, var, value);
@@ -421,18 +426,18 @@ vertex_ptr vertex_cofactor(vertex_ptr root, variable var, bool value){
     }
 }
 
-vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std::vector<variable>& ord){
+vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std::vector<std::string>& ord){
      vertex_ptr l,r;
-     variable root;
+     std::string root;
 
-    if(f->root.name  == "v1" )
+    if(f->root  == "v1" )
         return g;
-    if(f->root.name == "v0" )
+    if(f->root == "v0" )
         return h;
-    else if (g->root.name == "v1" && h->root.name == "v0")
+    else if (g->root == "v1" && h->root == "v0")
         return f;
     else{
-        root.name = ord[i].name;
+        root = ord[i];
         l = apply_ite(vertex_cofactor(f,ord[i],true),vertex_cofactor(g,ord[i],true),vertex_cofactor(h,ord[i],true),i+1,ord);
         r = apply_ite(vertex_cofactor(f,ord[i],false),vertex_cofactor(g,ord[i],false),vertex_cofactor(h,ord[i],false),i+1,ord);
         
@@ -443,17 +448,17 @@ vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std:
     }
 }
 
-std::optional<vertex_ptr> lookup(const std::vector<vertex_ptr>& unique_table, variable root, vertex_ptr lst, vertex_ptr rst){
+std::optional<vertex_ptr> lookup(const std::vector<vertex_ptr>& unique_table, const std::string& root, vertex_ptr lst, vertex_ptr rst){
     for (auto& vertex : unique_table) {
-        if (vertex->root.name == root.name && vertex->lsubtree == lst && vertex->rsubtree == rst)
+        if (vertex->root == root && vertex->lsubtree == lst && vertex->rsubtree == rst)
             return std::make_optional<vertex_ptr>(vertex);
     }
     return std::nullopt;
 }
-
-std::optional<vertex_ptr> lookup_comp(const std::vector<vertex_ptr>& unique_table, variable root, vertex_ptr lst, vertex_ptr rst, bool lcomp, bool rcomp){
+ 
+std::optional<vertex_ptr> lookup_comp(const std::vector<vertex_ptr>& unique_table, const std::string& root, vertex_ptr lst, vertex_ptr rst, bool lcomp, bool rcomp){
     for (auto& vertex : unique_table) {
-        if (vertex->root.name == root.name && vertex->lsubtree == lst && vertex->rsubtree == rst && vertex->complemented_l == lcomp && vertex->complemented_r == rcomp)
+        if (vertex->root == root && vertex->lsubtree == lst && vertex->rsubtree == rst && vertex->complemented_l == lcomp && vertex->complemented_r == rcomp)
             return std::make_optional<vertex_ptr>(vertex);
     }
     return std::nullopt;
@@ -465,7 +470,7 @@ void print_table(std::vector<vertex_ptr> unique_table){
     for(const auto& v : unique_table){
         
         char lbuf[16], rbuf[16];
-        if (v->root.name != "v1" && v->root.name != "v0") {
+        if (v->root != "v1" && v->root != "v0") {
             snprintf(lbuf, 16, "%c%p", char((v->complemented_l) ? '!' : ' '), v->lsubtree.get());
             snprintf(rbuf, 16, "%c%p", char((v->complemented_r) ? '!' : ' '), v->rsubtree.get());
         }
@@ -475,12 +480,40 @@ void print_table(std::vector<vertex_ptr> unique_table){
         }
 
         printf("%2d] %2s %p L-> %s R-> %s\n", 
-            i, v->root.name.c_str(), v.get(), lbuf, rbuf);
+            i, v->root.c_str(), v.get(), lbuf, rbuf);
         
         i += 1;
     }
 }
 
+
+void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord){
+    std::vector<bool> truthTable(pow(ord.size(), 2)*(ord.size()+1),false);
+
+    /*
+    for (auto& var : ord)
+        printf("%05s", var.c_str());
+    printf("\n");
+    */
+
+    unsigned int bits = 0b0;
+    for(unsigned int i = 0; i < pow(ord.size(), 2); i++) {
+        for(unsigned int j = 0; j < ord.size(); j++) {
+
+            bool value = (bits >> j) & 0b1;
+            truthTable[i * ord.size() + j] = value;
+            //printf("%05s", value ? "T" : "F");
+
+        }
+        //printf("\n");
+        bits += 1;
+    }
+
+    for(int i= 0; i<pow(ord.size(), 2); i++)
+
+
+
+}
 
 
 } // namespace jabddl
