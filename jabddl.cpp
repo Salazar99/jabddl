@@ -486,6 +486,23 @@ void print_table(std::vector<vertex_ptr> unique_table){
     }
 }
 
+bool evaluate_vertex(vertex_ptr root,const std::vector<std::string>& ord,std::vector<bool>& truthVector,int i){
+    if(root->root == "v0")
+        return false;
+    else if( root->root == "v1") 
+        return true;
+    else if(root->root == ord[i])
+    {    
+        if(truthVector[i] == true)
+           return evaluate_vertex(root->lsubtree,ord,truthVector,i+1);
+        else return evaluate_vertex(root->rsubtree,ord,truthVector,i+1);
+    }
+    else
+    { 
+        printf("Mistakes were made during evaluation of the Vertex");
+        exit(-1);
+        }
+}
 
 void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord){
     std::vector<bool> truthTable(pow(ord.size(), 2)*(ord.size()+1),false);
@@ -509,8 +526,26 @@ void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord){
         bits += 1;
     }
 
-    for(int i= 0; i<pow(ord.size(), 2); i++)
+    std::vector<bool> truthVect;
 
+    for(int i = 0; i < pow(ord.size(), 2); i = i + ord.size()+1) {
+        std::vector<bool> subtable(truthTable.begin() + i, truthTable.begin() + i * 2);
+        truthTable[i+1] = evaluate_vertex(f,ord, subtable,0);
+    }
+
+    
+    for (auto& var : ord)
+        printf("%5s", var.c_str());
+    printf("%5s", "out");    
+    printf("\n");
+    
+
+    for(unsigned int i = 0; i < pow(ord.size(), 2); i++) {
+        for(unsigned int j = 0; j < ord.size()+1; j++) {
+           printf("%5s",truthTable[i * ord.size() + j] ? "T" : "F");
+        }
+        printf("\n");
+    }
 
 
 }
