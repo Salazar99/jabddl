@@ -3,7 +3,7 @@
 
 int main(int argc, char **argv) {
     jabddl::initialize();
-    std::vector<jabddl::variable>  order;
+    std::vector<std::string>  order;
     std::vector<jabddl::expr_ptr> expr;
 
     auto x1 = jabddl::expr::make_var({"x1"});
@@ -24,8 +24,8 @@ int main(int argc, char **argv) {
     auto f3 = jabddl::ite(f2, arg1, arg2);
     //jabddl::expr::print(f3);
 
-    std::vector<jabddl::variable>  ordine = {jabddl::variable{"x1"},jabddl::variable{"x2"},jabddl::variable{"x3"},jabddl::variable{"x4"}};
-    std::vector<jabddl::variable>  ordine2 = {jabddl::variable{"x1"},jabddl::variable{"x2"}};
+    std::vector<std::string>  ordine = {{"x1"},{"x2"},{"x3"},{"x4"}};
+    std::vector<std::string>  ordine2 = {{"x1"},{"x2"}};
     
     auto f4 = jabddl::robdd_build_comp(f1,0,ordine2);
     jabddl::print_table(jabddl::unique_table);

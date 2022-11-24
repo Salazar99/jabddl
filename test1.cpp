@@ -13,32 +13,60 @@ int main(int argc, char **argv) {
     auto v1 = jabddl::expr::make_var({"v1"});
     
 
-    auto f1 = jabddl::ite(x1, x2, v0);
-    auto f2 = jabddl::ite(x2, x1, v0);
+    auto expr1 = jabddl::ite(x1, x2, v0);
+    auto expr2 = jabddl::ite(x2, x1, v0);
     
 
     std::cout << "Funzione 1";
-    jabddl::expr::print(f1);
+    jabddl::expr::print(expr1);
 
     std::cout << "Funzione 2";
-    jabddl::expr::print(f2);
+    jabddl::expr::print(expr2);
 
     std::vector<std::string>  ordine = {{"x1"},{"x2"}};
+    std::vector<std::string>  ordine_rev = {{"x2"},{"x1"}};
+    
     std::vector<std::string>  ordine2 = {{"x4"},{"x3"},{"x2"},{"x1"}};
     
-    auto f4 = jabddl::robdd_build(f1,0,ordine);
-    auto f5 = jabddl::robdd_build(f2,0,ordine);
+    auto f1 = jabddl::robdd_build(expr1,0,ordine);
+    auto f2 = jabddl::robdd_build(expr2,0,ordine);
 
-    jabddl::print_truth_table(f4, ordine);
+    auto f3 = jabddl::robdd_build(expr1,0,ordine_rev);
+    auto f4 = jabddl::robdd_build(expr2,0,ordine_rev);
+
+    jabddl::print_truth_table(f1, ordine);
 
 
     std::cout << "UNIQUE TABLE" <<std::endl;
     jabddl::print_table(jabddl::unique_table);
 
-    std::cout <<std::endl << "robdd for function order 1:" <<std::endl;
+    std::cout <<std::endl << "robdd for function 1 order: ";
+    for(std::string var : ordine)    
+        std::cout <<var; 
+    std::cout <<std::endl;
+    
+    jabddl::vertex::print(f1);
+
+      std::cout <<std::endl << "robdd for function 1 order: ";
+    for(std::string var : ordine_rev)    
+        std::cout <<var; 
+    std::cout <<std::endl;
+    
+    jabddl::vertex::print(f3);
+
+    std::cout <<std::endl << "robdd for function 2 order: ";
+    for(std::string var : ordine)    
+        std::cout <<var; 
+    std::cout <<std::endl;
+
+    jabddl::vertex::print(f2);
+
+     std::cout <<std::endl << "robdd for function 2 order: ";
+    for(std::string var : ordine_rev)    
+        std::cout <<var; 
+    std::cout <<std::endl;
+
     jabddl::vertex::print(f4);
-    std::cout <<std::endl << "robdd for function order 2:" <<std::endl;
-    jabddl::vertex::print(f5);
 
 
 

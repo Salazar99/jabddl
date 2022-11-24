@@ -28,6 +28,7 @@ expr::~expr() {
         delete var.name;
 }
 
+//* == and, + == or 
 expr_ptr expr::make_add(expr_ptr a, expr_ptr b) {
     auto res = new expr{};
     res->type = expr_type::Add;
@@ -99,8 +100,13 @@ void expr::print(const expr_ptr expr) {
     std::cout << stream.str() << std::endl;
 }
 
+/// @brief support function to print tree starting from root, for ease of print, the first that appears below a node.
+/// @param stream stringstream to print
+/// @param vert root
+/// @param depth depth of the recursion at the moment (used for formatting)
 static void print_vert_rec(std::stringstream& stream, vertex_ptr vert, int depth){
      ++depth;
+
     if(vert->root == "v0" || vert->root == "v1"){
         stream << "\n";
         for(int i = 1; i < depth-1; i++) stream << " |";
@@ -123,6 +129,7 @@ static void print_vert_rec(std::stringstream& stream, vertex_ptr vert, int depth
 void vertex::print(const vertex_ptr vert){
     std::stringstream stream;
     print_vert_rec(stream, vert, 0);
+    if(VERBOSE) std::cout<<"The format of the print is:\n[root]\n" <<" +[left-child]\n" <<" L[right-child]\n";
     std::cout << stream.str() <<std::endl;
 }
 
@@ -486,6 +493,12 @@ void print_table(std::vector<vertex_ptr> unique_table){
     }
 }
 
+/// @brief Support function for the truth table print
+/// @param root vertex root
+/// @param ord order in which we want to evaluate 
+/// @param truthVector vector of bool values that is used to evaluate the variables 
+/// @param i depth index, used to choose the correct value from truthVector
+/// @return evaluation value for the function
 bool evaluate_vertex(vertex_ptr root,const std::vector<std::string>& ord,std::vector<bool>& truthVector,int i){
     if(root->root == "v0")
         return false;
@@ -504,21 +517,25 @@ bool evaluate_vertex(vertex_ptr root,const std::vector<std::string>& ord,std::ve
         }
 }
 
+
+
 void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord){
-    std::vector<bool> truthTable(pow(ord.size(), 2)*(ord.size()+1),false);
+    printf("\nTruth table for the function: \n\n");
+
+    std::vector<bool> truthTable(pow(2, ord.size())*(ord.size()+1),false);
 
     /*
     for (auto& var : ord)
         printf("%05s", var.c_str());
     printf("\n");
     */
-
+    auto ord_size = ord.size();
     unsigned int bits = 0b0;
-    for(unsigned int i = 0; i < pow(ord.size(), 2); i++) {
+    for(unsigned int i = 0; i < pow(2, ord.size()); i++) {
         for(unsigned int j = 0; j < ord.size(); j++) {
 
             bool value = (bits >> j) & 0b1;
-            truthTable[i * ord.size() + j] = value;
+            truthTable[i * (ord.size()+1) + j] = value;
             //printf("%05s", value ? "T" : "F");
 
         }
@@ -528,9 +545,9 @@ void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord){
 
     std::vector<bool> truthVect;
 
-    for(int i = 0; i < pow(ord.size(), 2); i = i + ord.size()+1) {
-        std::vector<bool> subtable(truthTable.begin() + i, truthTable.begin() + i * 2);
-        truthTable[i+1] = evaluate_vertex(f,ord, subtable,0);
+    for(int i = 0; i < pow(2, ord.size())*(ord.size()+1); i = i + (ord.size()+1)) {
+        std::vector<bool> subtable = std::vector<bool>(truthTable.begin() + i, truthTable.begin() + i + ord.size() + 1);
+        truthTable[i+ord.size()] = evaluate_vertex(f,ord, subtable,0);
     }
 
     
@@ -540,14 +557,14 @@ void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord){
     printf("\n");
     
 
-    for(unsigned int i = 0; i < pow(ord.size(), 2); i++) {
+    for(unsigned int i = 0; i < pow(2, ord.size()); i++) {
         for(unsigned int j = 0; j < ord.size()+1; j++) {
-           printf("%5s",truthTable[i * ord.size() + j] ? "T" : "F");
+           printf("%5s",truthTable[i * (ord.size()+1) + j] ? "T" : "F");
         }
         printf("\n");
     }
 
-
+    printf("\n");
 }
 
 
