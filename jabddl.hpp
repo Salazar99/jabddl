@@ -50,7 +50,6 @@ struct expr {
 
 expr_ptr ite(expr_ptr a, expr_ptr b, expr_ptr c);
 
-struct vertex;
 using vertex_ptr = std::shared_ptr<vertex>;
 
 //0 and 1 leaf 
