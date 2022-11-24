@@ -23,6 +23,8 @@ enum class expr_type {
 struct expr;
 struct vertex;
 using expr_ptr = expr*;
+using vertex_ptr = std::shared_ptr<vertex>;
+
 
 struct expr_arg_2 { expr_ptr l; expr_ptr r; };
 struct expr_arg_1 { expr_ptr c; };
@@ -48,9 +50,13 @@ struct expr {
     static void print(const expr_ptr expr);
 };
 
+/// @brief return the expression that represent the ite(a,b,c) operation
+/// @param a expr for the if 
+/// @param b expr then
+/// @param c expr else 
+/// @return expr which represent (a*b) + (!a*c)
 expr_ptr ite(expr_ptr a, expr_ptr b, expr_ptr c);
 
-using vertex_ptr = std::shared_ptr<vertex>;
 
 //0 and 1 leaf 
 static inline vertex_ptr v0 = std::make_shared<vertex>("v0");
@@ -70,10 +76,21 @@ struct vertex {
     /// @param l left subtree
     /// @param r right subtree
     vertex(const std::string& root, vertex_ptr l, vertex_ptr r);
+    
+    /// @brief Constructs a new vertex for complemented edges 
+    /// @param root variable of the vertex
+    /// @param l left subtree
+    /// @param r right subtree
+    /// @param complemented_l true if left child is complemented, false otherwise
+    /// @param complemented_r true if right child is complemented, false otherwise
     vertex(const std::string& root, vertex_ptr l, vertex_ptr r, bool complemented_l, bool complemented_r);
 
+    /// @brief constructor for vertex without childs, used for leaves declaration
+    /// @param name variable name
     explicit vertex(const std::string& name);
 
+    /// @brief print the bdd with vert as root in a visually friendly form 
+    /// @param vert root of the bdd
     static void print(const vertex_ptr vert);
 };
 
@@ -155,7 +172,16 @@ vertex_ptr apply_ite_comp(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const
 /// @param unique_table 
 void print_table( std::vector<vertex_ptr> unique_table);
 
+/// @brief print the truth table for function f, given order of construction ord
+///        (be careful to use same order used for bdd construction otherwise if will fail)
+/// @param f function to evaluate 
+/// @param ord order of variables for f 
 void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord);
 
+/// @brief parse input file 
+/// @param file file to be parsed
+/// @param order order that will be returned to main file 
+/// @param expr parsed expressions that will be returned 
 void parse_input(std::string file, std::vector<std::string> &order, std::vector<std::string> &expr);
+
 } // namespace jabdd 

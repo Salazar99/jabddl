@@ -57,14 +57,14 @@ expr_ptr expr::make_var(const std::string& var) {
 
 expr_ptr ite(expr_ptr a, expr_ptr b, expr_ptr c) {
 
-    // If a then b
+    // If a then b (a*b)
     auto choise1 = expr::make_mul(a, b);
     
-    // if not a then c
+    // if not a then c  (!a*c)
     auto neg_a = expr::make_neg(a);
     auto choise2 = expr::make_mul(neg_a, c);
 
-    // x1 is 1 or 0
+    // x1 is 1 or 0 (choice1 + choice2)
     return expr::make_add(choise1, choise2);
 }
 
