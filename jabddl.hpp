@@ -11,7 +11,7 @@
 #include <iostream>
 #include <cmath>
 
-#define VERBOSE false
+#define VERBOSE true
 //IMPORTANT: In this implementetation the left child of the vertexes is considered to be 
 // the high branch of the tree with root in that vertex.
 namespace jabddl {

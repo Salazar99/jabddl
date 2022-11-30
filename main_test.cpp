@@ -6,8 +6,10 @@ int main(int argc, char **argv) {
     case 1:
         std::cout << "Too few arguments!" <<std::endl;
         exit(-1);
-    case 2:
-    case 3: //Maybe we want to do some checks on the parameters in input in the future
+    case 2:   
+    case 3:
+     //Maybe we want to do some checks on the parameters in input in the future
+         break;
     default: 
         std::cout << "Something went terribly wrong" <<std::endl;
         exit(-1);

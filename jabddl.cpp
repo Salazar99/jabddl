@@ -571,7 +571,7 @@ void parse_input(std::string file, std::vector<std::string> &order, std::vector<
     jabddl::fun func_token;
     size_t pos = 0;
     //template for variables and functions name
-    std::regex p_v_name("([a-z][0-9])+"), p_fname("F[0-9]");
+    std::regex p_v_name("([a-z][0-9])+"), p_fname("F[0-9]+"), p_print("print F[0-9]+");
     //template for ite 
     std::regex p_expr("ite\(((,?\s*[a-z][0-9])+|(,?\s*[0-1])+|(,?\s*F[0-9]\+[a-z]*[0-9])+|(,?\s*F[0-9]\-[a-z]*[0-9])+|(,?\s*F[0-9])+)+\)");
 
@@ -589,16 +589,18 @@ void parse_input(std::string file, std::vector<std::string> &order, std::vector<
 
     //parse variables
         std::getline(infile, line); 
-        pos = line.find(delimiter_var);
-        std::string token_string = line.substr(0, pos);
         //Check if template is correct
-        if(std::regex_search(token_string,var, p_v_name))
-            for(int c =0; c < num_var; c++){
-                order.push_back(var.str(c+1));
-                if(VERBOSE)
-                    std::cout << "Found var: " << var.str(c+1) <<std::endl;
-            }
-        else {
+        int count = 0;
+        while(std::regex_search(line,var, p_v_name)){
+                order.push_back(var[1].str());
+                if(VERBOSE){
+                    std::cout << "match size:" <<var.size();
+                    std::cout << "Found var: " << var[1].str() <<std::endl;
+                }
+                line = var.suffix().str();
+                count++;
+        }
+        if(count == 0){
             std::cout <<  "Error parsing variables";
             exit(-1);
         }
