@@ -4,6 +4,12 @@
 #include <memory>
 #include <string>
 #include <optional>
+#include <fstream>
+#include <regex>
+#include <sstream>
+#include <cassert>
+#include <iostream>
+#include <cmath>
 
 #define VERBOSE false
 //IMPORTANT: In this implementetation the left child of the vertexes is considered to be 
@@ -18,6 +24,11 @@ enum class expr_type {
     Not,
     Mul,
     Var
+};
+
+struct fun{
+    std::string func_name;
+    std::string expr;
 };
 
 struct expr;
@@ -182,6 +193,6 @@ void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord);
 /// @param file file to be parsed
 /// @param order order that will be returned to main file 
 /// @param expr parsed expressions that will be returned 
-void parse_input(std::string file, std::vector<std::string> &order, std::vector<std::string> &expr);
+void parse_input(std::string file, std::vector<std::string> &order, std::vector<jabddl::fun> &expr);
 
 } // namespace jabdd 

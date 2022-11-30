@@ -2,8 +2,23 @@
 #include <iostream>
 
 int main(int argc, char **argv) {
+    switch(argc){
+    case 1:
+        std::cout << "Too few arguments!" <<std::endl;
+        exit(-1);
+    case 2:
+    case 3: //Maybe we want to do some checks on the parameters in input in the future
+    default: 
+        std::cout << "Something went terribly wrong" <<std::endl;
+        exit(-1);
+    }
+
     jabddl::initialize();
-    std::vector<jabddl::expr_ptr> expr;
+    std::vector<std::string> order;
+    std::vector<jabddl::fun> expr;
+
+    jabddl::parse_input(((std::string)argv[1]), order, expr);
+
 
     auto x1 = jabddl::expr::make_var({"x1"});
     auto x2 = jabddl::expr::make_var({"x2"});

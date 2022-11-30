@@ -1,10 +1,5 @@
 #include "jabddl.hpp"
 
-#include <sstream>
-#include <cassert>
-#include <iostream>
-#include <cmath>
-
 namespace jabddl {
 
 //unique table to represent the vertices of all robdds
@@ -565,6 +560,78 @@ void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord){
     }
 
     printf("\n");
+}
+
+
+void parse_input(std::string file, std::vector<std::string> &order, std::vector<jabddl::fun> &expr){
+    std::ifstream infile(file);
+    std::string line;
+    std::string delimiter_func = "=";
+    std::string delimiter_var = " ";
+    jabddl::fun func_token;
+    size_t pos = 0;
+    //template for variables and functions name
+    std::regex p_v_name("([a-z][0-9])+"), p_fname("F[0-9]");
+    //template for ite 
+    std::regex p_expr("ite\(((,?\s*[a-z][0-9])+|(,?\s*[0-1])+|(,?\s*F[0-9]\+[a-z]*[0-9])+|(,?\s*F[0-9]\-[a-z]*[0-9])+|(,?\s*F[0-9])+)+\)");
+
+    std::smatch var,func, expr_parse;
+
+    if(VERBOSE) std::cout << "Beginning parsing..." <<std::endl;
+
+    //Get number of variables
+    std::getline(infile, line);
+    int num_var = std::stoi(line);
+
+    //Get number of functions
+    std::getline(infile, line);
+    int num_func = std::stoi(line);
+
+    //parse variables
+        std::getline(infile, line); 
+        pos = line.find(delimiter_var);
+        std::string token_string = line.substr(0, pos);
+        //Check if template is correct
+        if(std::regex_search(token_string,var, p_v_name))
+            for(int c =0; c < num_var; c++){
+                order.push_back(var.str(c+1));
+                if(VERBOSE)
+                    std::cout << "Found var: " << var.str(c+1) <<std::endl;
+            }
+        else {
+            std::cout <<  "Error parsing variables";
+            exit(-1);
+        }
+
+    //parse functions 
+    for(int i = 0 ; i < num_func; i++){
+        //read newline
+        std::getline(infile, line); 
+        pos = line.find(delimiter_func);
+        std::string token_string = line.substr(0, pos);
+        //Check if function name template is correct
+        if(std::regex_search(token_string,func, p_fname))
+            func_token.func_name = line.substr(0, pos);
+        else{
+            std::cout <<  "Error parsing name of function";
+            exit(-1);
+        }
+        if(VERBOSE)
+            std::cout <<"Found function: " << line << std::endl;
+        line.erase(0, pos + delimiter_func.length());
+        token_string = line.substr(0, pos);
+        //check if expression template is correct
+        if(std::regex_search(token_string,expr_parse, p_expr))
+            func_token.expr = line;
+        else{
+            std::cout <<  "Error parsing ite body";
+            exit(-1);
+        }
+        if(VERBOSE)
+            std::cout <<"Function body: " << line << std::endl;
+        expr.push_back(func_token);
+    }
+    if(VERBOSE) std::cout << "Parsing complete!" <<std::endl;
 }
 
 
