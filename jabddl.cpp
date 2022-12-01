@@ -102,12 +102,15 @@ void expr::print(const expr_ptr expr) {
 static void print_vert_rec(std::stringstream& stream, vertex_ptr vert, int depth){
      ++depth;
 
-    if(vert->root == "v0" || vert->root == "v1"){
+    if(vert->root == "v0" || vert->root == "v1")
+    {
         stream << "\n";
         for(int i = 1; i < depth-1; i++) stream << " |";
         if(depth >1) stream << " L";
         stream << "[" << vert->root << "]";
-    }else{
+    }
+    else
+    {
        
         stream << "\n";
         for(int i = 1; i < depth-1; i++) stream << " |";
@@ -142,7 +145,8 @@ vertex_ptr old_or_new(const std::string& root, vertex_ptr lst, vertex_ptr rst){
     auto result = lookup(unique_table, root, lst, rst);
     if (result.has_value())
         return *result;
-    else{
+    else
+    {
         /*create a new vertex*/
         auto l_tree = lookup(unique_table,lst->root,lst->lsubtree,lst->rsubtree);
         auto r_tree = lookup(unique_table,rst->root,rst->lsubtree,rst->rsubtree);
@@ -163,7 +167,8 @@ vertex_ptr old_or_new_comp(const std::string& root, vertex_ptr lst, vertex_ptr r
     auto result = lookup_comp(unique_table, root, lst, rst, l_comp,r_comp);
     if (result.has_value())
         return *result;
-    else{
+    else
+    {
         /*create a new vertex*/
         auto l_tree = lookup_comp(unique_table,lst->root,lst->lsubtree,lst->rsubtree,l_comp,r_comp);
         auto r_tree = lookup_comp(unique_table,rst->root,rst->lsubtree,rst->rsubtree,l_comp,r_comp);
@@ -225,6 +230,7 @@ expr_ptr evaluate(expr_ptr root, const std::string& var, bool value) {
             //0 + 0 = 0
             if(*root->args.l->var.name == v0_v && *root->args.r->var.name == v0_v)
                 return expr::make_var(v0_v);
+
             //1 + 1 = 1
             if(*root->args.l->var.name == v1_v && *root->args.r->var.name == v1_v)
                 return expr::make_var(v1_v);    
@@ -298,13 +304,16 @@ expr_ptr copy_expr_rec(const expr_ptr root) {
 
 bool vertex_compare(vertex_ptr vertex1,vertex_ptr vertex2){
     bool result = false;
-    if((vertex1->root == "v0" && vertex2->root == "v0") || (vertex1->root == "v1" && vertex2->root == "v1")){
+    if((vertex1->root == "v0" && vertex2->root == "v0") || (vertex1->root == "v1" && vertex2->root == "v1"))
+    {
         return true;
     }
-    else if((vertex1->root == "v1" && vertex2->root == "v0") || (vertex1->root == "v0" && vertex2->root == "v1")){
+    else if((vertex1->root == "v1" && vertex2->root == "v0") || (vertex1->root == "v0" && vertex2->root == "v1"))
+    {
         return false;
     }
-    else if(vertex1->root != "v0" && vertex2->root != "v1" && vertex1->root != "v1" && vertex2->root != "v0"){
+    else if(vertex1->root != "v0" && vertex2->root != "v1" && vertex1->root != "v1" && vertex2->root != "v0")
+    {
         result = vertex_compare(vertex1->lsubtree,vertex2->lsubtree) && vertex_compare(vertex1->rsubtree,vertex2->rsubtree) && (vertex1->root == vertex2->root);
     }
     return result;
@@ -314,13 +323,15 @@ vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<std::string>& ord) {
      vertex_ptr l,r;
      std::string root;
 
-    if(f->type == jabddl::expr_type::Var && (*f->var.name == v0_v || *f->var.name == v1_v)){
+    if(f->type == jabddl::expr_type::Var && (*f->var.name == v0_v || *f->var.name == v1_v))
+    {
         if(*f->var.name == v0_v)
             return v0;
         if(*f->var.name == v1_v)
             return v1; 
     }
-    else{
+    else
+    {
 
         //assert(i < ord.size());
         root = ord[i];
@@ -349,15 +360,18 @@ vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<std::string>& ord) {
 bool vertex_compare_comp(vertex_ptr vertex1,vertex_ptr vertex2){
     bool result = false;
     //Base case
-    if(vertex1->root == "v1" && vertex2->root == "v1"){
+    if(vertex1->root == "v1" && vertex2->root == "v1")
+    {
         return true;
     }
     //roots have same name but one of the two is complemented and the other no
-    else if((vertex1->root == vertex2->root && (!(vertex1->complemented_l && vertex2->complemented_l) || !(vertex1->complemented_r && vertex2->complemented_r))) || (vertex1->root != vertex2->root)){
+    else if((vertex1->root == vertex2->root && (!(vertex1->complemented_l && vertex2->complemented_l) || !(vertex1->complemented_r && vertex2->complemented_r))) || (vertex1->root != vertex2->root))
+    {
         return false;
     }
     //same name and same complementation, need to check for subtrees
-    else{
+    else
+    {
         result = vertex_compare(vertex1->lsubtree,vertex2->lsubtree) && vertex_compare(vertex1->rsubtree,vertex2->rsubtree) && (vertex1->root == vertex2->root);
     }
     return result;
@@ -370,13 +384,15 @@ vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& o
      bool lcomp = false;
      bool rcomp = false;
 
-    if(f->type == jabddl::expr_type::Var && (*f->var.name == v0_v || *f->var.name == v1_v)){
+    if(f->type == jabddl::expr_type::Var && (*f->var.name == v0_v || *f->var.name == v1_v))
+    {
         if(*f->var.name == v0_v)
             return v0;
         if(*f->var.name == v1_v)
             return v1; 
     }
-    else{
+    else
+    {
 
         //assert(i < ord.size());
         root = ord[i];
@@ -385,7 +401,8 @@ vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& o
         l = robdd_build_comp(evaluate(l_copy.get(), ord[i], true), i+1, ord);
       
         //if l points to v0, it is replaced by v1 and marked as complemented
-        if(l->root == v0->root){
+        if(l->root == v0->root)
+        {
             lcomp = true;
             l = v1;
         }
@@ -397,7 +414,8 @@ vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& o
         r = robdd_build_comp(evaluate(r_copy.get(), ord[i], false), i+1, ord);
        
         //if r points to v0, it is replaced by v1 and marked as complemented
-        if(r->root == v0->root){
+        if(r->root == v0->root)
+        {
             rcomp = true;
             r = v1;
         }
@@ -414,14 +432,17 @@ vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& o
 }
 
 vertex_ptr vertex_cofactor(vertex_ptr root, const std::string& var, bool value){
-    if(root->root == var){
+    if(root->root == var)
+    {
         if(value)
             return root->lsubtree;
         else 
             return root->rsubtree;
-    }else if(root->root == "v0" || root->root == "v1")
+    }
+    else if(root->root == "v0" || root->root == "v1")
         return root; 
-    else{
+    else
+    {
         root->lsubtree = vertex_cofactor(root->lsubtree, var, value);
         root->rsubtree = vertex_cofactor(root->rsubtree, var, value);
         return root;
@@ -438,7 +459,8 @@ vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std:
         return h;
     else if (g->root == "v1" && h->root == "v0")
         return f;
-    else{
+    else
+    {
         root = ord[i];
         l = apply_ite(vertex_cofactor(f,ord[i],true),vertex_cofactor(g,ord[i],true),vertex_cofactor(h,ord[i],true),i+1,ord);
         r = apply_ite(vertex_cofactor(f,ord[i],false),vertex_cofactor(g,ord[i],false),vertex_cofactor(h,ord[i],false),i+1,ord);
@@ -451,7 +473,8 @@ vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std:
 }
 
 std::optional<vertex_ptr> lookup(const std::vector<vertex_ptr>& unique_table, const std::string& root, vertex_ptr lst, vertex_ptr rst){
-    for (auto& vertex : unique_table) {
+    for (auto& vertex : unique_table)
+    {
         if (vertex->root == root && vertex->lsubtree == lst && vertex->rsubtree == rst)
             return std::make_optional<vertex_ptr>(vertex);
     }
@@ -459,7 +482,8 @@ std::optional<vertex_ptr> lookup(const std::vector<vertex_ptr>& unique_table, co
 }
  
 std::optional<vertex_ptr> lookup_comp(const std::vector<vertex_ptr>& unique_table, const std::string& root, vertex_ptr lst, vertex_ptr rst, bool lcomp, bool rcomp){
-    for (auto& vertex : unique_table) {
+    for (auto& vertex : unique_table)
+    {
         if (vertex->root == root && vertex->lsubtree == lst && vertex->rsubtree == rst && vertex->complemented_l == lcomp && vertex->complemented_r == rcomp)
             return std::make_optional<vertex_ptr>(vertex);
     }
@@ -469,14 +493,17 @@ std::optional<vertex_ptr> lookup_comp(const std::vector<vertex_ptr>& unique_tabl
 void print_table(std::vector<vertex_ptr> unique_table){
     
     int i = 0;
-    for(const auto& v : unique_table){
+    for(const auto& v : unique_table)
+    {
         
         char lbuf[16], rbuf[16];
-        if (v->root != "v1" && v->root != "v0") {
+        if (v->root != "v1" && v->root != "v0") 
+        {
             snprintf(lbuf, 16, "%c%p", char((v->complemented_l) ? '!' : ' '), v->lsubtree.get());
             snprintf(rbuf, 16, "%c%p", char((v->complemented_r) ? '!' : ' '), v->rsubtree.get());
         }
-        else{
+        else
+        {
             snprintf(lbuf, 16, "---");
             snprintf(rbuf, 16, "---");
         }
@@ -526,8 +553,10 @@ void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord){
     */
     auto ord_size = ord.size();
     unsigned int bits = 0b0;
-    for(unsigned int i = 0; i < pow(2, ord.size()); i++) {
-        for(unsigned int j = 0; j < ord.size(); j++) {
+    for(unsigned int i = 0; i < pow(2, ord.size()); i++)
+    {
+        for(unsigned int j = 0; j < ord.size(); j++)
+        {
 
             bool value = (bits >> j) & 0b1;
             truthTable[i * (ord.size()+1) + j] = value;
@@ -540,7 +569,8 @@ void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord){
 
     std::vector<bool> truthVect;
 
-    for(int i = 0; i < pow(2, ord.size())*(ord.size()+1); i = i + (ord.size()+1)) {
+    for(int i = 0; i < pow(2, ord.size())*(ord.size()+1); i = i + (ord.size()+1))
+    {
         std::vector<bool> subtable = std::vector<bool>(truthTable.begin() + i, truthTable.begin() + i + ord.size() + 1);
         truthTable[i+ord.size()] = evaluate_vertex(f,ord, subtable,0);
     }
@@ -552,8 +582,10 @@ void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord){
     printf("\n");
     
 
-    for(unsigned int i = 0; i < pow(2, ord.size()); i++) {
-        for(unsigned int j = 0; j < ord.size()+1; j++) {
+    for(unsigned int i = 0; i < pow(2, ord.size()); i++)
+    {
+        for(unsigned int j = 0; j < ord.size()+1; j++)
+        {
            printf("%5s",truthTable[i * (ord.size()+1) + j] ? "T" : "F");
         }
         printf("\n");
@@ -573,9 +605,9 @@ void parse_input(std::string file, std::vector<std::string> &order, std::vector<
     //template for variables and functions name
     std::regex p_v_name("([a-z][0-9])+"), p_fname("F[0-9]+"), p_print("print F[0-9]+");
     //template for ite 
-    std::regex p_expr("ite\(((,?\s*[a-z][0-9])+|(,?\s*[0-1])+|(,?\s*F[0-9]\+[a-z]*[0-9])+|(,?\s*F[0-9]\-[a-z]*[0-9])+|(,?\s*F[0-9])+)+\)");
+    std::regex p_expr("ite\\(((,?\\s*[a-z][0-9])+|(,?\\s*[0-1])+|(,?\\s*F[0-9]\\+[a-z]*[0-9])+|(,?\\s*F[0-9]\\-[a-z]*[0-9])+|(,?\\s*F[0-9])+)+\\)");
 
-    std::smatch var,func, expr_parse;
+    std::smatch var,func, expr_parse,print;
 
     if(VERBOSE) std::cout << "Beginning parsing..." <<std::endl;
 
@@ -587,54 +619,80 @@ void parse_input(std::string file, std::vector<std::string> &order, std::vector<
     std::getline(infile, line);
     int num_func = std::stoi(line);
 
+    if(VERBOSE) std::cout << std::endl  << "Beginning varibles parsing..." <<std::endl;
+
     //parse variables
         std::getline(infile, line); 
         //Check if template is correct
         int count = 0;
-        while(std::regex_search(line,var, p_v_name)){
+        while(std::regex_search(line,var, p_v_name))
+        {
                 order.push_back(var[1].str());
-                if(VERBOSE){
-                    std::cout << "match size:" <<var.size();
+                if(VERBOSE)
+                {
+                    //std::cout << "match size:" <<var.size() <<std::endl;
                     std::cout << "Found var: " << var[1].str() <<std::endl;
                 }
                 line = var.suffix().str();
                 count++;
         }
-        if(count == 0){
+
+        if(count != num_var)
+        {
             std::cout <<  "Error parsing variables";
             exit(-1);
         }
+
+    if(VERBOSE) std::cout << std::endl  << "Beginning functions parsing..." <<std::endl;
 
     //parse functions 
     for(int i = 0 ; i < num_func; i++){
         //read newline
         std::getline(infile, line); 
-        pos = line.find(delimiter_func);
-        std::string token_string = line.substr(0, pos);
         //Check if function name template is correct
-        if(std::regex_search(token_string,func, p_fname))
-            func_token.func_name = line.substr(0, pos);
-        else{
+        if(std::regex_search(line,func, p_fname))
+            func_token.func_name = func.str();
+        else
+        {
             std::cout <<  "Error parsing name of function";
             exit(-1);
         }
         if(VERBOSE)
-            std::cout <<"Found function: " << line << std::endl;
-        line.erase(0, pos + delimiter_func.length());
-        token_string = line.substr(0, pos);
+            std::cout <<"Found function: " << func.str() << std::endl;
         //check if expression template is correct
-        if(std::regex_search(token_string,expr_parse, p_expr))
+        if(std::regex_search(line,expr_parse, p_expr))
             func_token.expr = line;
-        else{
+        else
+        {
             std::cout <<  "Error parsing ite body";
             exit(-1);
         }
         if(VERBOSE)
-            std::cout <<"Function body: " << line << std::endl;
+            std::cout <<"Function body: " << expr_parse.str() << std::endl;
         expr.push_back(func_token);
+    }
+
+    if(VERBOSE) std::cout << std::endl << "Beginning prints parsing..." <<std::endl;
+
+    while(std::getline(infile, line)){
+        if(std::regex_search(line, print, p_fname)){
+            for(fun f : expr)
+                if(f.func_name == print.str()){
+                    f.tbp = true;
+                    if(VERBOSE)
+                        std::cout << "To be printed: " << print.str() <<std::endl;
+                } 
+        }
+        else
+        {
+            std::cout <<"Error parsing print!" << std::endl;
+            exit(-1);
+        }
     }
     if(VERBOSE) std::cout << "Parsing complete!" <<std::endl;
 }
+
+
 
 
 } // namespace jabddl

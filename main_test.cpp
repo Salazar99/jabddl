@@ -1,26 +1,42 @@
 #include "jabddl.hpp"
 #include <iostream>
 
+void    bash_help(); 
+
+
 int main(int argc, char **argv) {
+    std::string inputFile;
+    std::vector<std::string> order;
+    std::vector<jabddl::fun> expr;
+
     switch(argc){
     case 1:
-        std::cout << "Too few arguments!" <<std::endl;
-        exit(-1);
-    case 2:   
+    case 2:
+        if((std::string)argv[1] != "-h"){ 
+            std::cout << "Too few arguments!" <<std::endl;
+            std::cout << "type -h for help!" <<std::endl;
+            exit(-1);  
+        }
+        else bash_help();
+
     case 3:
      //Maybe we want to do some checks on the parameters in input in the future
-         break;
+        if((std::string)argv[1] != "-f")
+        {
+           std::cout << "expected \"-f\" before input file" <<std::endl;
+           std::cout << "type -h for help!" <<std::endl;
+           exit(-1);
+        }
+
+        inputFile = (std::string)argv[2];  
+        break;
     default: 
         std::cout << "Something went terribly wrong" <<std::endl;
         exit(-1);
     }
 
     jabddl::initialize();
-    std::vector<std::string> order;
-    std::vector<jabddl::fun> expr;
-
-    jabddl::parse_input(((std::string)argv[1]), order, expr);
-
+    jabddl::parse_input(inputFile, order, expr);
 
     auto x1 = jabddl::expr::make_var({"x1"});
     auto x2 = jabddl::expr::make_var({"x2"});
@@ -113,4 +129,11 @@ int main(int argc, char **argv) {
     */
 
     return 0;
+}
+
+void bash_help(){
+    std::cout << "Usage:" << std::endl <<std::endl
+    << "\"-f\": specify input file" <<std::endl
+    << "Example of usage: $ ./jabdd -f input.txt" <<std::endl;
+    exit(0);
 }

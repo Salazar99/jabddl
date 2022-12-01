@@ -29,6 +29,7 @@ enum class expr_type {
 struct fun{
     std::string func_name;
     std::string expr;
+    bool tbp = false; //to be printed?
 };
 
 struct expr;
