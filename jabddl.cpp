@@ -594,8 +594,41 @@ void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord){
     printf("\n");
 }
 
+/// @brief Parse line_expr to get if then else tokens 
+/// @param func fun obj to be filled
+/// @param line_expr string that represent ite expr
+void parse_func(jabddl::fun &func, std::string line_expr){
+    std::regex p_v_name("(F[0-9]\\+F[0-9])+|(F[0-9]\\-F[0-9])+|(F[0-9]\\+[a-z][0-9])+|(F[0-9]\\-[a-z][0-9])+|(F[0-9]\\+[0-1])+|(F[0-9]\\-[0-1])+|([a-z][0-9])+|([0-1])+|(F[0-9])+");
+    std::smatch var;
+   
+    for(int c = 0; c < 3 ; c++){
+        if(std::regex_search(line_expr,var,p_v_name)){
+            switch(c){
+                case 0: func.ite_if = var.str(); break;
+                case 1: func.ite_then = var.str(); break;
+                case 2: func.ite_else = var.str(); break;
+                default: std::cout << "Error in parsing ITE body!!" <<std::endl;
+                         exit(-1);
+            };
+            if(VERBOSE) std::cout << "Found ite member: " << var.str() <<std::endl;
+            line_expr = var.suffix().str();
+        }
+        else{
+            std::cout << "Format error in ITE body of function: " <<func.func_name <<std::endl;
+            exit(-1);
+        }
+    }
 
-void parse_input(std::string file, std::vector<std::string> &order, std::vector<jabddl::fun> &expr){
+    //if true it means we have more than 3 member for ITE
+    if(std::regex_search(line_expr,var,p_v_name)){
+        std::cout << "Too many arguments for ITE in function: " <<func.func_name <<std::endl;
+        exit(-1);
+    }
+    
+}
+
+
+void parse_input(std::string file, std::vector<std::string> &order, std::vector<jabddl::fun> &funs){
     std::ifstream infile(file);
     std::string line;
     std::string delimiter_func = "=";
@@ -660,8 +693,10 @@ void parse_input(std::string file, std::vector<std::string> &order, std::vector<
         if(VERBOSE)
             std::cout <<"Found function: " << func.str() << std::endl;
         //check if expression template is correct
-        if(std::regex_search(line,expr_parse, p_expr))
-            func_token.expr = line;
+        if(std::regex_search(line,expr_parse, p_expr)){
+            func_token.expr = expr_parse.str();
+            parse_func(func_token,expr_parse.str());
+        }
         else
         {
             std::cout <<  "Error parsing ite body";
@@ -669,14 +704,14 @@ void parse_input(std::string file, std::vector<std::string> &order, std::vector<
         }
         if(VERBOSE)
             std::cout <<"Function body: " << expr_parse.str() << std::endl;
-        expr.push_back(func_token);
+        funs.push_back(func_token);
     }
 
     if(VERBOSE) std::cout << std::endl << "Beginning prints parsing..." <<std::endl;
 
     while(std::getline(infile, line)){
         if(std::regex_search(line, print, p_fname)){
-            for(fun f : expr)
+            for(fun f : funs)
                 if(f.func_name == print.str()){
                     f.tbp = true;
                     if(VERBOSE)
@@ -691,8 +726,4 @@ void parse_input(std::string file, std::vector<std::string> &order, std::vector<
     }
     if(VERBOSE) std::cout << "Parsing complete!" <<std::endl;
 }
-
-
-
-
 } // namespace jabddl

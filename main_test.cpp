@@ -6,8 +6,10 @@ void    bash_help();
 
 int main(int argc, char **argv) {
     std::string inputFile;
+    //Order of evaluation
     std::vector<std::string> order;
-    std::vector<jabddl::fun> expr;
+    //Functions 
+    std::vector<jabddl::fun> funs;
 
     switch(argc){
     case 1:
@@ -36,7 +38,7 @@ int main(int argc, char **argv) {
     }
 
     jabddl::initialize();
-    jabddl::parse_input(inputFile, order, expr);
+    jabddl::parse_input(inputFile, order, funs);
 
     auto x1 = jabddl::expr::make_var({"x1"});
     auto x2 = jabddl::expr::make_var({"x2"});

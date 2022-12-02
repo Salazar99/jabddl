@@ -28,8 +28,12 @@ enum class expr_type {
 
 struct fun{
     std::string func_name;
-    std::string expr;
+    std::string expr; //to be removed 
     bool tbp = false; //to be printed?
+    //in the future may become type jabddl::expr
+    std::string ite_if;
+    std::string ite_then;
+    std::string ite_else;
 };
 
 struct expr;
@@ -194,6 +198,7 @@ void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord);
 /// @param file file to be parsed
 /// @param order order that will be returned to main file 
 /// @param expr parsed expressions that will be returned 
-void parse_input(std::string file, std::vector<std::string> &order, std::vector<jabddl::fun> &expr);
+void parse_input(std::string file, std::vector<std::string> &order, std::vector<jabddl::fun> &funs);
+
 
 } // namespace jabdd 
