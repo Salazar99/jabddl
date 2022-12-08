@@ -4,3 +4,6 @@ jabddl
 input.txt
 #run script 
 run.sh
+
+#VS code config 
+.vscode
