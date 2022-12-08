@@ -1,0 +1,6 @@
+#executable
+jabddl
+#input file
+input.txt
+#run script 
+run.sh
