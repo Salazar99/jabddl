@@ -826,8 +826,7 @@ void parse_input(std::string file, std::vector<std::string> &order, jabddl::cont
         if(std::regex_search(line, print, p_fname)){
             //And function is present in context, set it to be printable
             if(cntx.funcs.find(print.str()) != cntx.funcs.end()){
-                auto f = cntx.funcs[print.str()];
-                f.tbp = true;
+                cntx.funcs[print.str()].tbp = true;
                 if(VERBOSE)
                     std::cout << "To be printed: " << print.str() <<std::endl;
             }

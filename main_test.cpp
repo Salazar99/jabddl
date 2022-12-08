@@ -48,10 +48,31 @@ int main(int argc, char **argv) {
             std::cout << "variable: " << x << std::endl;
         }
 
-        for (auto const& f : cntx.funcs)
+        for (auto &f : cntx.funcs)
         {
             std::cout << "functions: " << f.first << std::endl;
         }
+    }
+
+
+    for (auto &f : cntx.funcs)
+    {
+        jabddl::fun function = f.second;
+        if(VERBOSE) std::cout << "Building BDD for function: " << function.func_name << std::endl;
+        cntx.root_vertexes.insert(std::make_pair(function.func_name, jabddl::robdd_build(jabddl::ite(function.ite_if,function.ite_then,function.ite_else),0,cntx.vars)));
+    }
+
+    for(auto &f : cntx.root_vertexes){
+        if(cntx.funcs[f.first].tbp){
+            std::cout << "Function: " << f.first << std::endl;
+            jabddl::vertex::print(f.second);
+            std::cout << std::endl << std::endl;
+
+            std::cout << "Truth table for function: " << f.first << std::endl;
+            jabddl::print_truth_table(f.second, cntx.vars);
+            std::cout << std::endl << std::endl;
+        }
+    
     }
 
 /*

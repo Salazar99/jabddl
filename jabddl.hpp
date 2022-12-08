@@ -142,14 +142,14 @@ vertex_ptr old_or_new_comp(const std::string& root, vertex_ptr lst, vertex_ptr r
 ///@brief: Takes in input an expression and first variable and return the 
 ///        pointer to the root of the robdd
 ///@param f is the expression on wich the bdd must be built,
-///@param i represent the first variable to be used for shannon expression   
+///@param i vector of variables giving the order in which to calculate shannon expansion 
 vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<std::string>& ord);
 
 ///@brief: Takes in input an expression and first variable and return the 
 ///        pointer to the root of the robdd 
 ///        Works with complemented edges
 ///@param f is the expression on wich the bdd must be built,
-///@param i represent the first variable to be used for shannon expression   
+///@param i vector of variables giving the order in which to calculate shannon expansion 
 vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& ord);
 
 ///@brief Given a vertex, it checks if it is present inside the unique table and returns it
