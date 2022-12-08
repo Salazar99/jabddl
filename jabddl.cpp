@@ -23,7 +23,7 @@ expr::~expr() {
         delete var.name;
 }
 
-//* == and, + == or 
+//* == and, + == or
 expr_ptr expr::make_add(expr_ptr a, expr_ptr b) {
     auto res = new expr{};
     res->type = expr_type::Add;
@@ -213,10 +213,10 @@ expr_ptr evaluate(expr_ptr root, const std::string& var, bool value) {
             if (*root->args.r->var.name == v1_v)
                 return root->args.l;
 
-            //x * 0 = 0
+            // 0 * x = 0
             if(*root->args.l->var.name == v0_v)
                 return expr::make_var(v0_v);
-
+            // x * 0 = 0
             if(*root->args.r->var.name == v0_v)
                 return expr::make_var(v0_v);
 
@@ -238,14 +238,14 @@ expr_ptr evaluate(expr_ptr root, const std::string& var, bool value) {
             //0 + x = x
             if(*root->args.l->var.name == v0_v)
                 return root->args.r;
-
+            //x + 0 = 0 
              if(*root->args.r->var.name == v0_v)
                 return root->args.l;
 
             //1 + x = 1 
             if(*root->args.l->var.name == v1_v)
                 return expr::make_var(v1_v);    
-
+            //x + 1 = 1 
             if(*root->args.r->var.name == v1_v)
                 return expr::make_var(v1_v);              
 
@@ -594,24 +594,125 @@ void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord){
     printf("\n");
 }
 
+jabddl::expr_ptr parse_ite_parts(std::string ite_part, jabddl::context &cntx){
+    std::regex p_const("\\s*([0-1])"), p_var("\\s*([a-z][0-9])"), p_fun("F[0-9]"), p_f_op("(F[0-9]\\+F[0-9])+|(F[0-9]\\-F[0-9])+|(F[0-9]\\+[a-z][0-9])+|(F[0-9]\\-[a-z][0-9])+|(F[0-9]\\+[0-1])+|(F[0-9]\\-[0-1])+"), p_op("(F[0-9])|(\\-|\\+)|([a-z][0-9])");
+    std::smatch match_obj;
+
+    if(VERBOSE) std::cout << "Beginning parsing of: " << ite_part << std::endl;
+
+    //if regex matches a restricted function name 
+    if(std::regex_search(ite_part, match_obj ,p_f_op)){
+        //parse Function , operation and varible 
+        if(std::regex_search(ite_part,match_obj,p_op)){
+            if(cntx.funcs.find(match_obj.str(0)) != cntx.funcs.end()){
+                auto f = cntx.funcs[match_obj.str(0)];
+                std::string f_name = match_obj.str();
+                std::string cof_op,var_str;
+                ite_part = match_obj.suffix().str();
+
+                if(!(std::regex_search(ite_part,match_obj,p_op))){
+                    std::cout << "Parsing of restricted function failed to retrieve type of cofactor" << std::endl;
+                    exit(-1);
+                }
+                cof_op = match_obj.str();
+                ite_part = match_obj.suffix().str();
+
+                 if(!(std::regex_search(ite_part,match_obj,p_op))){
+                    std::cout << "Parsing of restricted function failed to retreive cofactor variable" << std::endl;
+                    exit(-1);
+                }
+                var_str = match_obj.str();
+
+                if(VERBOSE){
+                    std::cout << "function: " << f_name << std::endl;
+                    std::cout << "operation: " << cof_op  << std::endl;
+                    std::cout << "variable: " << var_str << std::endl;
+                }
+
+                if(cof_op == "+"){
+                    if(VERBOSE){
+                        std::cout << "Function: " << f_name << " Evaluated for variable: " <<var_str << " positive cofactor" <<std::endl;
+                    }
+                    return jabddl::evaluate(jabddl::ite(f.ite_if,f.ite_then,f.ite_else),var_str,true);
+                }
+                else{
+                    if(VERBOSE){
+                        std::cout << "Function: " << f_name << " Evaluated for variable: " <<var_str << " negative cofactor" <<std::endl;
+                     }
+                    return jabddl::evaluate(jabddl::ite(f.ite_if,f.ite_then,f.ite_else),var_str,false);
+                }
+            }
+            else{
+                std::cout << "Trying to refence a function that has never been declared!!" << ite_part <<std::endl;
+                exit(-1);
+            }
+        }    
+    }
+    //if regex matches a function name
+    else if ( std::regex_search(ite_part, match_obj, p_fun)){
+        //If the function exists in context
+        if(cntx.funcs.find(match_obj.str()) != cntx.funcs.end()){
+            auto f =  cntx.funcs[match_obj.str()];
+            //return the ite of the function parts
+            if(VERBOSE){
+                std::cout << "Function: " << match_obj.str()  <<std::endl;
+            }
+            return jabddl::ite(f.ite_if,f.ite_then,f.ite_else);
+        }
+    //if regex matches a variable 
+    }else if(std::regex_search(ite_part, match_obj, p_var)){
+        if(std::find(cntx.vars.begin(), cntx.vars.end(), match_obj.str()) != cntx.vars.end()){
+            //return a expr_ptr variable 
+            if(VERBOSE){
+                std::cout << "Variable: " <<match_obj.str()  <<std::endl;
+            }
+            return jabddl::expr::make_var(match_obj.str());
+        }
+        else{
+            std::cout << "Trying to reference a variable that has never been declared!! " <<std::endl;
+            exit(-1);
+        }
+    }
+    //if regex matches a constant (0 or 1)
+    else if(std::regex_search(ite_part, match_obj, p_const)){
+        //return a variable named: v0 or v1 
+        if(VERBOSE){
+            std::cout << "constant: " <<match_obj.str()  <<std::endl;
+        }
+        return jabddl::expr::make_var("v"+match_obj.str());
+    }
+    else{
+        std::cout << "Impossible to have a match on ite_part: " << ite_part <<std::endl;
+        exit(-1);
+    }
+    std::cout << "Error: execution escaped if-else statement during parsing of ite body parts!! " <<std::endl;
+        exit(-1);
+}
+
+
 /// @brief Parse line_expr to get if then else tokens 
 /// @param func fun obj to be filled
 /// @param line_expr string that represent ite expr
-void parse_func(jabddl::fun &func, std::string line_expr){
+/// @param cntx context object to store variable and functions
+void parse_func(jabddl::fun &func, std::string line_expr, jabddl::context &cntx){
     std::regex p_v_name("(F[0-9]\\+F[0-9])+|(F[0-9]\\-F[0-9])+|(F[0-9]\\+[a-z][0-9])+|(F[0-9]\\-[a-z][0-9])+|(F[0-9]\\+[0-1])+|(F[0-9]\\-[0-1])+|([a-z][0-9])+|([0-1])+|(F[0-9])+");
-    std::smatch var;
-   
+    std::regex p_const("[0-1]"), p_var("[a-z][0-9]"), p_fun("F[0-9]"), p_f_op("(F[0-9]\\+F[0-9])+|(F[0-9]\\-F[0-9])+|(F[0-9]\\+[a-z][0-9])+|(F[0-9]\\-[a-z][0-9])+|(F[0-9]\\+[0-1])+|(F[0-9]\\-[0-1])+");
+    std::smatch part;
+    
+    std::string ite_if,ite_then,ite_else;
+    if(VERBOSE) std::cout << "Beginning parsing of function: " << func.func_name <<std::endl;
+
     for(int c = 0; c < 3 ; c++){
-        if(std::regex_search(line_expr,var,p_v_name)){
+        if(std::regex_search(line_expr,part,p_v_name)){
             switch(c){
-                case 0: func.ite_if = var.str(); break;
-                case 1: func.ite_then = var.str(); break;
-                case 2: func.ite_else = var.str(); break;
+                case 0: ite_if = part.str(); break;
+                case 1: ite_then = part.str(); break;
+                case 2: ite_else = part.str(); break;
                 default: std::cout << "Error in parsing ITE body!!" <<std::endl;
                          exit(-1);
             };
-            if(VERBOSE) std::cout << "Found ite member: " << var.str() <<std::endl;
-            line_expr = var.suffix().str();
+            if(VERBOSE) std::cout << "Found ite member: " << part.str() <<std::endl;
+            line_expr = part.suffix().str();
         }
         else{
             std::cout << "Format error in ITE body of function: " <<func.func_name <<std::endl;
@@ -619,16 +720,26 @@ void parse_func(jabddl::fun &func, std::string line_expr){
         }
     }
 
+    func.ite_if = parse_ite_parts(ite_if, cntx);
+    if(VERBOSE) std::cout << "ite_if parsed correctly" <<std::endl;
+    func.ite_then = parse_ite_parts(ite_then, cntx);
+    if(VERBOSE) std::cout << "ite_then parsed correctly" <<std::endl;
+    func.ite_else = parse_ite_parts(ite_else , cntx);
+    if(VERBOSE) std::cout << "ite_else parsed correctly" <<std::endl;
+
     //if true it means we have more than 3 member for ITE
-    if(std::regex_search(line_expr,var,p_v_name)){
+    if(std::regex_search(line_expr,part,p_v_name)){
         std::cout << "Too many arguments for ITE in function: " <<func.func_name <<std::endl;
         exit(-1);
     }
     
 }
 
-
-void parse_input(std::string file, std::vector<std::string> &order, std::vector<jabddl::fun> &funs){
+/// @brief Function to parse input file
+/// @param file nameFile
+/// @param order vector in which we memorize the order of the variables to be used
+/// @param cntx context variable
+void parse_input(std::string file, std::vector<std::string> &order, jabddl::context &cntx){
     std::ifstream infile(file);
     std::string line;
     std::string delimiter_func = "=";
@@ -660,7 +771,7 @@ void parse_input(std::string file, std::vector<std::string> &order, std::vector<
         int count = 0;
         while(std::regex_search(line,var, p_v_name))
         {
-                order.push_back(var[1].str());
+                cntx.vars.push_back(var.str());
                 if(VERBOSE)
                 {
                     //std::cout << "match size:" <<var.size() <<std::endl;
@@ -694,29 +805,36 @@ void parse_input(std::string file, std::vector<std::string> &order, std::vector<
             std::cout <<"Found function: " << func.str() << std::endl;
         //check if expression template is correct
         if(std::regex_search(line,expr_parse, p_expr)){
-            func_token.expr = expr_parse.str();
-            parse_func(func_token,expr_parse.str());
+            parse_func(func_token,expr_parse.str(), cntx);
         }
         else
         {
-            std::cout <<  "Error parsing ite body";
+            std::cout <<  "Error parsing ite body, incorrect template!!";
             exit(-1);
         }
         if(VERBOSE)
             std::cout <<"Function body: " << expr_parse.str() << std::endl;
-        funs.push_back(func_token);
+        cntx.funcs.insert(std::make_pair(func_token.func_name,func_token));
     }
 
     if(VERBOSE) std::cout << std::endl << "Beginning prints parsing..." <<std::endl;
 
+    //Should remain only prints now
+    //Cycle through them 
     while(std::getline(infile, line)){
+        //If pattern matches
         if(std::regex_search(line, print, p_fname)){
-            for(fun f : funs)
-                if(f.func_name == print.str()){
-                    f.tbp = true;
-                    if(VERBOSE)
-                        std::cout << "To be printed: " << print.str() <<std::endl;
-                } 
+            //And function is present in context, set it to be printable
+            if(cntx.funcs.find(print.str()) != cntx.funcs.end()){
+                auto f = cntx.funcs[print.str()];
+                f.tbp = true;
+                if(VERBOSE)
+                    std::cout << "To be printed: " << print.str() <<std::endl;
+            }
+            else{
+                std::cout <<"Trying to print a function that has never been declared!!" << std::endl;
+                exit(-1);
+            }
         }
         else
         {

@@ -26,20 +26,31 @@ enum class expr_type {
     Var
 };
 
-struct fun{
-    std::string func_name;
-    std::string expr; //to be removed 
-    bool tbp = false; //to be printed?
-    //in the future may become type jabddl::expr
-    std::string ite_if;
-    std::string ite_then;
-    std::string ite_else;
-};
-
 struct expr;
 struct vertex;
 using expr_ptr = expr*;
 using vertex_ptr = std::shared_ptr<vertex>;
+
+struct fun{
+    std::string func_name;
+    bool tbp = false; //to be printed?
+    //in the future may become type jabddl::expr
+    jabddl::expr_ptr ite_if;
+    jabddl::expr_ptr ite_then;
+    jabddl::expr_ptr ite_else;
+};
+
+
+struct context{
+
+    std::vector<std::string> vars;
+    std::unordered_map<std::string, jabddl::fun> funcs;
+
+    std::unordered_map<std::string, jabddl::vertex_ptr> root_vertexes;
+
+};
+
+
 
 
 struct expr_arg_2 { expr_ptr l; expr_ptr r; };
@@ -197,8 +208,8 @@ void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord);
 /// @brief parse input file 
 /// @param file file to be parsed
 /// @param order order that will be returned to main file 
-/// @param expr parsed expressions that will be returned 
-void parse_input(std::string file, std::vector<std::string> &order, std::vector<jabddl::fun> &funs);
+/// @param cntx context obj that stores functions and variables 
+void parse_input(std::string file, std::vector<std::string> &order, jabddl::context & cntx);
 
 
 } // namespace jabdd 
