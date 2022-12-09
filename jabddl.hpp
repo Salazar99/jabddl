@@ -11,7 +11,6 @@
 #include <iostream>
 #include <cmath>
 
-#define VERBOSE true
 extern int verbosity;
 //IMPORTANT: In this implementetation the left child of the vertexes is considered to be 
 // the high branch of the tree with root in that vertex.
@@ -35,7 +34,6 @@ using vertex_ptr = std::shared_ptr<vertex>;
 struct fun{
     std::string func_name;
     bool tbp = false; //to be printed?
-    //in the future may become type jabddl::expr
     jabddl::expr_ptr ite_if;
     jabddl::expr_ptr ite_then;
     jabddl::expr_ptr ite_else;
@@ -50,8 +48,6 @@ struct context{
     std::unordered_map<std::string, jabddl::vertex_ptr> root_vertexes;
 
 };
-
-
 
 
 struct expr_arg_2 { expr_ptr l; expr_ptr r; };
@@ -168,11 +164,6 @@ std::optional<vertex_ptr> lookup(const std::vector<vertex_ptr>& unique_table, co
 ///@param rst right subtree.       
 std::optional<vertex_ptr> lookup_comp(const std::vector<vertex_ptr>& unique_table, const std::string& root, vertex_ptr lst, vertex_ptr rst, bool lcomp, bool rcomp);
 
-/// @brief Evaluates the expression f with respect to the variable var
-/// @param f expression to be evaluated 
-/// @param var variable on wich we want to evaluate the expression
-expr compute(expr f, std::string var);
-
 ///@brief Given two vertex pointers, it compares them to enstablish if they're equal.
 ///@param vertex1 pointer to a vertex structure;
 ///@param vertex2 pointer to a vertex structure;       
@@ -209,7 +200,7 @@ void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord);
 /// @brief parse input file 
 /// @param file file to be parsed
 /// @param order order that will be returned to main file 
-/// @param cntx context obj that stores functions and variables 
+/// @param cntx context obj that stores functions a//in the future may become type jabddl::exprnd variables 
 void parse_input(std::string file, std::vector<std::string> &order, jabddl::context & cntx);
 
 

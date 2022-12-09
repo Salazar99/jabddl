@@ -10,7 +10,7 @@ void initialize() {
     unique_table.push_back(v1);
 }
 
-//0 and 1 variables used to valuate expressions
+//0 and 1 variables used to evaluate expressions
 auto v0_v = std::string("v0");
 auto v1_v = std::string("v1");
 
@@ -95,7 +95,7 @@ void expr::print(const expr_ptr expr) {
     std::cout << stream.str() << std::endl;
 }
 
-/// @brief support function to print tree starting from root, for ease of print, the first that appears below a node.
+/// @brief support function to print tree starting from root
 /// @param stream stringstream to print
 /// @param vert root
 /// @param depth depth of the recursion at the moment (used for formatting)
@@ -123,7 +123,8 @@ static void print_vert_rec(std::stringstream& stream, vertex_ptr vert, int depth
    
 }
 
-
+/// @brief Print bdd 
+/// @param vert root of the bdd
 void vertex::print(const vertex_ptr vert){
     std::stringstream stream;
     print_vert_rec(stream, vert, 0);
@@ -131,13 +132,20 @@ void vertex::print(const vertex_ptr vert){
     std::cout << stream.str() <<std::endl;
 }
 
-//constructor for normal vertexes
+/// @brief constructor for non complemented bdds
+/// @param root bdd root
+/// @param l left child
+/// @param r right child
 vertex::vertex(const std::string& root, vertex_ptr l, vertex_ptr r) 
 : root{root}, lsubtree{l}, rsubtree{r} { }
 
-//constructor for complemented edges vertexes
+/// @brief constructor for complemented edges bdds
+/// @param root bdd root
+/// @param l left child
+/// @param r right child
 vertex::vertex(const std::string& root, vertex_ptr l, vertex_ptr r, bool complemented_l, bool complemented_r)
 : root{root}, lsubtree{l}, rsubtree{r}, complemented_l{complemented_l}, complemented_r{complemented_r} {}
+
 
 vertex_ptr old_or_new(const std::string& root, vertex_ptr lst, vertex_ptr rst){
     
@@ -183,6 +191,11 @@ vertex_ptr old_or_new_comp(const std::string& root, vertex_ptr lst, vertex_ptr r
     }
 }
 
+/// @brief Evaluate given function
+/// @param root expression 
+/// @param var  variable to which evaluate
+/// @param value variable value for evaluation (T|F)
+/// @return pointer to evaluated expression
 expr_ptr evaluate(expr_ptr root, const std::string& var, bool value) {
     if(root->type == jabddl::expr_type::Var && *root->var.name == var){
               if(value)
@@ -277,6 +290,9 @@ expr_ptr evaluate(expr_ptr root, const std::string& var, bool value) {
     exit(-1);
 }
 
+/// @brief Support function for deep copy of expression 
+/// @param root expression to be copied
+/// @return pointer to a new instance of root expression
 expr_ptr copy_expr_rec(const expr_ptr root) {
     
     // Copied expr
@@ -333,20 +349,15 @@ vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<std::string>& ord) {
     else
     {
 
-        //assert(i < ord.size());
         root = ord[i];
         
         auto l_copy = std::unique_ptr<expr>(copy_expr_rec(f));
         l = robdd_build(evaluate(l_copy.get(), ord[i], true), i+1, ord);
-        //std::cout<< "f valutata per: " << ord[i].name <<" positivo\n";
-        //expr::print(l_copy);
-        //delete_expr(l_copy);
+        if(verbosity == 2) std::cout<< "f valutata per: " << ord[i] <<" positivo\n";
 
         auto r_copy = std::unique_ptr<expr>(copy_expr_rec(f));
         r = robdd_build(evaluate(r_copy.get(), ord[i], false), i+1, ord);
-        //std::cout<< "f valutata per: " << ord[i].name <<" positivo\n";
-        //expr::print(r_copy);
-        //delete_expr(r_copy);
+        if(verbosity == 2) std::cout<< "f valutata per: " << ord[i] <<" neagativo\n";
     
         if(vertex_compare(l,r)/*l->lsubtree == r->lsubtree && l->rsubtree == r->rsubtree*/)
             return l;
@@ -377,7 +388,6 @@ bool vertex_compare_comp(vertex_ptr vertex1,vertex_ptr vertex2){
     return result;
 }
 
-
 vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& ord) {
      vertex_ptr l,r;
      std::string root;
@@ -406,9 +416,8 @@ vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& o
             lcomp = true;
             l = v1;
         }
-        //std::cout<< "f valutata per: " << ord[i].name <<" positivo\n";
-        //expr::print(l_copy);
-        //delete_expr(l_copy);
+        if(verbosity == 2) std::cout<< "f evaluated for: " << ord[i] <<" positive\n";
+
 
         auto r_copy = std::unique_ptr<expr>(copy_expr_rec(f));
         r = robdd_build_comp(evaluate(r_copy.get(), ord[i], false), i+1, ord);
@@ -419,9 +428,8 @@ vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& o
             rcomp = true;
             r = v1;
         }
-        //std::cout<< "f valutata per: " << ord[i].name <<" positivo\n";
-        //expr::print(r_copy);
-        //delete_expr(r_copy);
+        if(verbosity == 2) std::cout<< "f evaluated for: " << ord[i] <<" negative\n";
+
 
         if(vertex_compare_comp(l,r) && (lcomp == rcomp)/*l->lsubtree == r->lsubtree && l->rsubtree == r->rsubtree*/)
             return l;
@@ -431,6 +439,11 @@ vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& o
     exit(-1);
 }
 
+/// @brief Calculate vertex cofactor w.r.t. a variable
+/// @param root vertex to be co-factorize
+/// @param var variable 
+/// @param value boolean value for the co-factorization
+/// @return pointer to vertex cofactor
 vertex_ptr vertex_cofactor(vertex_ptr root, const std::string& var, bool value){
     if(root->root == var)
     {
@@ -472,6 +485,12 @@ vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std:
     }
 }
 
+/// @brief Check for the presence of a vertex in the unique table 
+/// @param unique_table table of vertexes
+/// @param root vertex root
+/// @param lst vertex left subtree
+/// @param rst vetex right subtree
+/// @return pointer to vertex if found, nothing otherwise
 std::optional<vertex_ptr> lookup(const std::vector<vertex_ptr>& unique_table, const std::string& root, vertex_ptr lst, vertex_ptr rst){
     for (auto& vertex : unique_table)
     {
@@ -481,6 +500,14 @@ std::optional<vertex_ptr> lookup(const std::vector<vertex_ptr>& unique_table, co
     return std::nullopt;
 }
  
+/// @brief Check for the presence of a vertex in the unique table 
+/// @param unique_table table of vertexes
+/// @param root vertex root
+/// @param lst vertex left subtree
+/// @param rst vetex right subtree
+/// @param lcomp is l subtree complemented?
+/// @param rcomp is r subtree complemented?
+/// @return pointer to vertex if found, nothing otherwise
 std::optional<vertex_ptr> lookup_comp(const std::vector<vertex_ptr>& unique_table, const std::string& root, vertex_ptr lst, vertex_ptr rst, bool lcomp, bool rcomp){
     for (auto& vertex : unique_table)
     {
@@ -541,8 +568,6 @@ bool evaluate_vertex(vertex_ptr root,const std::vector<std::string>& ord,std::ve
     }
 }
 
-
-
 void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord){
     printf("\nTruth table for the function: \n\n");
 
@@ -596,6 +621,10 @@ void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord){
     printf("\n");
 }
 
+/// @brief Support function to parse ite body parts (if,then,else)
+/// @param ite_part string representing the ite_part
+/// @param cntx context object to be populated
+/// @return expression representing the ite_part 
 jabddl::expr_ptr parse_ite_parts(std::string ite_part, jabddl::context &cntx){
     std::regex p_const("\\s*([0-1])"), p_var("\\s*([a-z][0-9])"), p_fun("F[0-9]"), p_f_op("(F[0-9]\\+F[0-9])+|(F[0-9]\\-F[0-9])+|(F[0-9]\\+[a-z][0-9])+|(F[0-9]\\-[a-z][0-9])+|(F[0-9]\\+[0-1])+|(F[0-9]\\-[0-1])+"), p_op("(F[0-9])|(\\-|\\+)|([a-z][0-9])");
     std::smatch match_obj;
@@ -690,7 +719,6 @@ jabddl::expr_ptr parse_ite_parts(std::string ite_part, jabddl::context &cntx){
     std::cout << "Error: execution escaped if-else statement during parsing of ite body parts!! " <<std::endl;
         exit(-1);
 }
-
 
 /// @brief Parse line_expr to get if then else tokens 
 /// @param func fun obj to be filled
