@@ -1,5 +1,5 @@
 #include "jabddl.hpp"
-
+int verbosity = 0;
 namespace jabddl {
 
 //unique table to represent the vertices of all robdds
@@ -127,7 +127,7 @@ static void print_vert_rec(std::stringstream& stream, vertex_ptr vert, int depth
 void vertex::print(const vertex_ptr vert){
     std::stringstream stream;
     print_vert_rec(stream, vert, 0);
-    if(VERBOSE) std::cout<<"The format of the print is:\n[root]\n" <<" +[left-child]\n" <<" L[right-child]\n";
+    if(verbosity) std::cout<<"The format of the print is:\n[root]\n" <<" +[left-child]\n" <<" L[right-child]\n";
     std::cout << stream.str() <<std::endl;
 }
 
@@ -522,21 +522,23 @@ void print_table(std::vector<vertex_ptr> unique_table){
 /// @param i depth index, used to choose the correct value from truthVector
 /// @return evaluation value for the function
 bool evaluate_vertex(vertex_ptr root,const std::vector<std::string>& ord,std::vector<bool>& truthVector,int i){
+    //no further evaluation is needed
     if(root->root == "v0")
         return false;
     else if( root->root == "v1") 
         return true;
+    //We are matching the current variable to evaluate
     else if(root->root == ord[i])
     {    
         if(truthVector[i] == true)
            return evaluate_vertex(root->lsubtree,ord,truthVector,i+1);
         else return evaluate_vertex(root->rsubtree,ord,truthVector,i+1);
     }
+    //root is not v0 or v1 but current order var does not match --> try next variable in order
     else
     { 
-        printf("Mistakes were made during evaluation of the Vertex");
-        exit(-1);
-        }
+       return evaluate_vertex(root, ord, truthVector,i+1);
+    }
 }
 
 
@@ -598,7 +600,7 @@ jabddl::expr_ptr parse_ite_parts(std::string ite_part, jabddl::context &cntx){
     std::regex p_const("\\s*([0-1])"), p_var("\\s*([a-z][0-9])"), p_fun("F[0-9]"), p_f_op("(F[0-9]\\+F[0-9])+|(F[0-9]\\-F[0-9])+|(F[0-9]\\+[a-z][0-9])+|(F[0-9]\\-[a-z][0-9])+|(F[0-9]\\+[0-1])+|(F[0-9]\\-[0-1])+"), p_op("(F[0-9])|(\\-|\\+)|([a-z][0-9])");
     std::smatch match_obj;
 
-    if(VERBOSE) std::cout << "Beginning parsing of: " << ite_part << std::endl;
+    if(verbosity) std::cout << "Beginning parsing of: " << ite_part << std::endl;
 
     //if regex matches a restricted function name 
     if(std::regex_search(ite_part, match_obj ,p_f_op)){
@@ -623,20 +625,20 @@ jabddl::expr_ptr parse_ite_parts(std::string ite_part, jabddl::context &cntx){
                 }
                 var_str = match_obj.str();
 
-                if(VERBOSE){
+                if(verbosity){
                     std::cout << "function: " << f_name << std::endl;
                     std::cout << "operation: " << cof_op  << std::endl;
                     std::cout << "variable: " << var_str << std::endl;
                 }
 
                 if(cof_op == "+"){
-                    if(VERBOSE){
+                    if(verbosity){
                         std::cout << "Function: " << f_name << " Evaluated for variable: " <<var_str << " positive cofactor" <<std::endl;
                     }
                     return jabddl::evaluate(jabddl::ite(f.ite_if,f.ite_then,f.ite_else),var_str,true);
                 }
                 else{
-                    if(VERBOSE){
+                    if(verbosity){
                         std::cout << "Function: " << f_name << " Evaluated for variable: " <<var_str << " negative cofactor" <<std::endl;
                      }
                     return jabddl::evaluate(jabddl::ite(f.ite_if,f.ite_then,f.ite_else),var_str,false);
@@ -654,7 +656,7 @@ jabddl::expr_ptr parse_ite_parts(std::string ite_part, jabddl::context &cntx){
         if(cntx.funcs.find(match_obj.str()) != cntx.funcs.end()){
             auto f =  cntx.funcs[match_obj.str()];
             //return the ite of the function parts
-            if(VERBOSE){
+            if(verbosity){
                 std::cout << "Function: " << match_obj.str()  <<std::endl;
             }
             return jabddl::ite(f.ite_if,f.ite_then,f.ite_else);
@@ -663,7 +665,7 @@ jabddl::expr_ptr parse_ite_parts(std::string ite_part, jabddl::context &cntx){
     }else if(std::regex_search(ite_part, match_obj, p_var)){
         if(std::find(cntx.vars.begin(), cntx.vars.end(), match_obj.str()) != cntx.vars.end()){
             //return a expr_ptr variable 
-            if(VERBOSE){
+            if(verbosity){
                 std::cout << "Variable: " <<match_obj.str()  <<std::endl;
             }
             return jabddl::expr::make_var(match_obj.str());
@@ -676,7 +678,7 @@ jabddl::expr_ptr parse_ite_parts(std::string ite_part, jabddl::context &cntx){
     //if regex matches a constant (0 or 1)
     else if(std::regex_search(ite_part, match_obj, p_const)){
         //return a variable named: v0 or v1 
-        if(VERBOSE){
+        if(verbosity){
             std::cout << "constant: " <<match_obj.str()  <<std::endl;
         }
         return jabddl::expr::make_var("v"+match_obj.str());
@@ -700,7 +702,7 @@ void parse_func(jabddl::fun &func, std::string line_expr, jabddl::context &cntx)
     std::smatch part;
     
     std::string ite_if,ite_then,ite_else;
-    if(VERBOSE) std::cout << "Beginning parsing of function: " << func.func_name <<std::endl;
+    if(verbosity) std::cout << "Beginning parsing of function: " << func.func_name <<std::endl;
 
     for(int c = 0; c < 3 ; c++){
         if(std::regex_search(line_expr,part,p_v_name)){
@@ -711,7 +713,7 @@ void parse_func(jabddl::fun &func, std::string line_expr, jabddl::context &cntx)
                 default: std::cout << "Error in parsing ITE body!!" <<std::endl;
                          exit(-1);
             };
-            if(VERBOSE) std::cout << "Found ite member: " << part.str() <<std::endl;
+            if(verbosity) std::cout << "Found ite member: " << part.str() <<std::endl;
             line_expr = part.suffix().str();
         }
         else{
@@ -721,11 +723,11 @@ void parse_func(jabddl::fun &func, std::string line_expr, jabddl::context &cntx)
     }
 
     func.ite_if = parse_ite_parts(ite_if, cntx);
-    if(VERBOSE) std::cout << "ite_if parsed correctly" <<std::endl;
+    if(verbosity) std::cout << "ite_if parsed correctly" <<std::endl;
     func.ite_then = parse_ite_parts(ite_then, cntx);
-    if(VERBOSE) std::cout << "ite_then parsed correctly" <<std::endl;
+    if(verbosity) std::cout << "ite_then parsed correctly" <<std::endl;
     func.ite_else = parse_ite_parts(ite_else , cntx);
-    if(VERBOSE) std::cout << "ite_else parsed correctly" <<std::endl;
+    if(verbosity) std::cout << "ite_else parsed correctly" <<std::endl;
 
     //if true it means we have more than 3 member for ITE
     if(std::regex_search(line_expr,part,p_v_name)){
@@ -753,7 +755,7 @@ void parse_input(std::string file, std::vector<std::string> &order, jabddl::cont
 
     std::smatch var,func, expr_parse,print;
 
-    if(VERBOSE) std::cout << "Beginning parsing..." <<std::endl;
+    if(verbosity) std::cout << "Beginning parsing..." <<std::endl;
 
     //Get number of variables
     std::getline(infile, line);
@@ -763,7 +765,7 @@ void parse_input(std::string file, std::vector<std::string> &order, jabddl::cont
     std::getline(infile, line);
     int num_func = std::stoi(line);
 
-    if(VERBOSE) std::cout << std::endl  << "Beginning varibles parsing..." <<std::endl;
+    if(verbosity) std::cout << std::endl  << "Beginning varibles parsing..." <<std::endl;
 
     //parse variables
         std::getline(infile, line); 
@@ -772,7 +774,7 @@ void parse_input(std::string file, std::vector<std::string> &order, jabddl::cont
         while(std::regex_search(line,var, p_v_name))
         {
                 cntx.vars.push_back(var.str());
-                if(VERBOSE)
+                if(verbosity)
                 {
                     //std::cout << "match size:" <<var.size() <<std::endl;
                     std::cout << "Found var: " << var[1].str() <<std::endl;
@@ -787,7 +789,7 @@ void parse_input(std::string file, std::vector<std::string> &order, jabddl::cont
             exit(-1);
         }
 
-    if(VERBOSE) std::cout << std::endl  << "Beginning functions parsing..." <<std::endl;
+    if(verbosity) std::cout << std::endl  << "Beginning functions parsing..." <<std::endl;
 
     //parse functions 
     for(int i = 0 ; i < num_func; i++){
@@ -801,7 +803,7 @@ void parse_input(std::string file, std::vector<std::string> &order, jabddl::cont
             std::cout <<  "Error parsing name of function";
             exit(-1);
         }
-        if(VERBOSE)
+        if(verbosity)
             std::cout <<"Found function: " << func.str() << std::endl;
         //check if expression template is correct
         if(std::regex_search(line,expr_parse, p_expr)){
@@ -812,12 +814,12 @@ void parse_input(std::string file, std::vector<std::string> &order, jabddl::cont
             std::cout <<  "Error parsing ite body, incorrect template!!";
             exit(-1);
         }
-        if(VERBOSE)
+        if(verbosity)
             std::cout <<"Function body: " << expr_parse.str() << std::endl;
         cntx.funcs.insert(std::make_pair(func_token.func_name,func_token));
     }
 
-    if(VERBOSE) std::cout << std::endl << "Beginning prints parsing..." <<std::endl;
+    if(verbosity) std::cout << std::endl << "Beginning prints parsing..." <<std::endl;
 
     //Should remain only prints now
     //Cycle through them 
@@ -827,7 +829,7 @@ void parse_input(std::string file, std::vector<std::string> &order, jabddl::cont
             //And function is present in context, set it to be printable
             if(cntx.funcs.find(print.str()) != cntx.funcs.end()){
                 cntx.funcs[print.str()].tbp = true;
-                if(VERBOSE)
+                if(verbosity)
                     std::cout << "To be printed: " << print.str() <<std::endl;
             }
             else{
@@ -841,6 +843,6 @@ void parse_input(std::string file, std::vector<std::string> &order, jabddl::cont
             exit(-1);
         }
     }
-    if(VERBOSE) std::cout << "Parsing complete!" <<std::endl;
+    if(verbosity) std::cout << "Parsing complete!" <<std::endl;
 }
 } // namespace jabddl
