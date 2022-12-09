@@ -1,86 +1,41 @@
 #pragma once
 
-#include <vector>
 #include <memory>
 #include <string>
 #include <optional>
 #include <fstream>
 #include <regex>
-#include <sstream>
 #include <cassert>
-#include <iostream>
 #include <cmath>
+#include "vertex.hpp"
+#include "expr.hpp"
 
 extern int verbosity;
+
 //IMPORTANT: In this implementetation the left child of the vertexes is considered to be 
 // the high branch of the tree with root in that vertex.
 namespace jabddl {
-
-/// @brief Create and add to unique_table the 0 and 1 leaves
-void initialize();
-
-enum class expr_type {
-    Add,
-    Not,
-    Mul,
-    Var
-};
-
-struct expr;
-struct vertex;
 using expr_ptr = expr*;
 using vertex_ptr = std::shared_ptr<vertex>;
 
+//contains parsed informations about a function
 struct fun{
     std::string func_name;
-    bool tbp = false; //to be printed?
+    bool tbp = false; //to be printed
     jabddl::expr_ptr ite_if;
     jabddl::expr_ptr ite_then;
     jabddl::expr_ptr ite_else;
 };
 
-
+//object that contains variables and functions for manipulation purposes
 struct context{
-
+    //vector of variables
     std::vector<std::string> vars;
+    //map of declared functions
     std::unordered_map<std::string, jabddl::fun> funcs;
-
+    //map to store bdd corresponding to functions
     std::unordered_map<std::string, jabddl::vertex_ptr> root_vertexes;
-
 };
-
-
-struct expr_arg_2 { expr_ptr l; expr_ptr r; };
-struct expr_arg_1 { expr_ptr c; };
-struct expr_var   { std::string* name; };
-
-/// Represents an expression 
-struct expr {
-    expr_type type;
-    union {
-        expr_arg_2 args;
-        expr_arg_1 arg;
-        expr_var var;
-    };
-
-    explicit expr();
-    ~expr();
-
-    static expr_ptr make_add(expr_ptr a, expr_ptr b);
-    static expr_ptr make_mul(expr_ptr a, expr_ptr b);
-    static expr_ptr make_neg(expr_ptr n);
-    static expr_ptr make_var(const std::string& var);
-
-    static void print(const expr_ptr expr);
-};
-
-/// @brief return the expression that represent the ite(a,b,c) operation
-/// @param a expr for the if 
-/// @param b expr then
-/// @param c expr else 
-/// @return expr which represent (a*b) + (!a*c)
-expr_ptr ite(expr_ptr a, expr_ptr b, expr_ptr c);
-
 
 //0 and 1 leaf 
 static inline vertex_ptr v0 = std::make_shared<vertex>("v0");
@@ -89,34 +44,8 @@ static inline vertex_ptr v1 = std::make_shared<vertex>("v1");
 //unique table to represent the vertices of all robdds
 extern std::vector<vertex_ptr> unique_table;
 
-//structure to represent a vertex of the bdd
-struct vertex {
-    std::string root;
-    vertex_ptr lsubtree, rsubtree;
-    bool complemented_l,complemented_r;
-   
-    /// @brief Constructs a new vertex
-    /// @param root variable of the vertex
-    /// @param l left subtree
-    /// @param r right subtree
-    vertex(const std::string& root, vertex_ptr l, vertex_ptr r);
-    
-    /// @brief Constructs a new vertex for complemented edges 
-    /// @param root variable of the vertex
-    /// @param l left subtree
-    /// @param r right subtree
-    /// @param complemented_l true if left child is complemented, false otherwise
-    /// @param complemented_r true if right child is complemented, false otherwise
-    vertex(const std::string& root, vertex_ptr l, vertex_ptr r, bool complemented_l, bool complemented_r);
-
-    /// @brief constructor for vertex without childs, used for leaves declaration
-    /// @param name variable name
-    explicit vertex(const std::string& name);
-
-    /// @brief print the bdd with vert as root in a visually friendly form 
-    /// @param vert root of the bdd
-    static void print(const vertex_ptr vert);
-};
+/// @brief Create and add to unique_table the 0 and 1 leaves
+void initialize();
 
 ///@brief The function takes a vertex in input and return:
 ///          a new vertex if the one in input does not exists at the moment or
@@ -134,7 +63,6 @@ vertex_ptr old_or_new(const std::string& root, vertex_ptr lst, vertex_ptr rst);
 ///@param lst left subtree.
 ///@param rst right subtree. 
 vertex_ptr old_or_new_comp(const std::string& root, vertex_ptr lst, vertex_ptr rst);
-
 
 ///@brief: Takes in input an expression and first variable and return the 
 ///        pointer to the root of the robdd
@@ -197,10 +125,10 @@ void print_table( std::vector<vertex_ptr> unique_table);
 /// @param ord order of variables for f 
 void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord);
 
-/// @brief parse input file 
-/// @param file file to be parsed
-/// @param order order that will be returned to main file 
-/// @param cntx context obj that stores functions a//in the future may become type jabddl::exprnd variables 
+/// @brief Function to parse input file
+/// @param file nameFile
+/// @param order vector in which we memorize the order of the variables to be used
+/// @param cntx context variable
 void parse_input(std::string file, std::vector<std::string> &order, jabddl::context & cntx);
 
 
