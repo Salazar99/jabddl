@@ -129,7 +129,7 @@ void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord);
 /// @param file nameFile
 /// @param order vector in which we memorize the order of the variables to be used
 /// @param cntx context variable
-void parse_input(std::string file, std::vector<std::string> &order, jabddl::context & cntx);
+void parse_input(std::string file, jabddl::context & cntx);
 
 
 } // namespace jabdd 

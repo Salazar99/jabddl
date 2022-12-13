@@ -239,8 +239,8 @@ void print_table(std::vector<vertex_ptr> unique_table){
         char lbuf[16], rbuf[16];
         if (v->root != "v1" && v->root != "v0") 
         {
-            snprintf(lbuf, 16, "%c%p", char((v->complemented_l) ? '!' : ' '), v->lsubtree.get());
-            snprintf(rbuf, 16, "%c%p", char((v->complemented_r) ? '!' : ' '), v->rsubtree.get());
+            snprintf(lbuf, 16, "%c%p", char((v->complemented_l) ? '!' : ' '), (void*)v->lsubtree.get());
+            snprintf(rbuf, 16, "%c%p", char((v->complemented_r) ? '!' : ' '), (void*)v->rsubtree.get());
         }
         else
         {
@@ -249,7 +249,7 @@ void print_table(std::vector<vertex_ptr> unique_table){
         }
 
         printf("%2d] %2s %p L-> %s R-> %s\n", 
-            i, v->root.c_str(), v.get(), lbuf, rbuf);
+            i, v->root.c_str(), (void*)v.get(), lbuf, rbuf);
         
         i += 1;
     }
@@ -265,7 +265,6 @@ void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord){
         printf("%05s", var.c_str());
     printf("\n");
     */
-    auto ord_size = ord.size();
     unsigned int bits = 0b0;
     for(unsigned int i = 0; i < pow(2, ord.size()); i++)
     {
@@ -452,13 +451,13 @@ void parse_func(jabddl::fun &func, std::string line_expr, jabddl::context &cntx)
     
 }
 
-void parse_input(std::string file, std::vector<std::string> &order, jabddl::context &cntx){
+void parse_input(std::string file, jabddl::context &cntx){
     std::ifstream infile(file);
     std::string line;
     std::string delimiter_func = "=";
     std::string delimiter_var = " ";
     jabddl::fun func_token;
-    size_t pos = 0;
+
     //template for variables and functions name
     std::regex p_v_name("([a-z][0-9])+"), p_fname("F[0-9]+"), p_print("print F[0-9]+");
     //template for ite 
