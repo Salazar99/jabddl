@@ -1,7 +1,7 @@
 
 #include <sstream>
 #include <iostream>
-#include "vertex.hpp"
+#include "../include/vertex.hpp"
 
 int verbosity = 0;
 

@@ -1,4 +1,4 @@
-#include "jabddl.hpp"
+#include "../include/jabddl.hpp"
 #include <iostream>
 void bash_help(); 
 

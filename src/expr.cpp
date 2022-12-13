@@ -1,4 +1,4 @@
-#include "expr.hpp"
+#include "../include/expr.hpp"
 
 expr::expr() : type{expr_type::Var} { }
 expr::~expr() {
