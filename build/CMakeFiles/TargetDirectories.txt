@@ -1,0 +1,3 @@
+/mnt/c/Users/Daniele/Desktop/jabddl/build/CMakeFiles/jabddl.dir
+/mnt/c/Users/Daniele/Desktop/jabddl/build/CMakeFiles/edit_cache.dir
+/mnt/c/Users/Daniele/Desktop/jabddl/build/CMakeFiles/rebuild_cache.dir
