@@ -6,7 +6,7 @@ input.txt
 run.sh
 
 #VS code config 
-/.vscode
+.vscode/
 
 #Build folder
-/build
+build/
