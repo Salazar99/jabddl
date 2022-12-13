@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/jabddl.dir/src/jabddl.cpp.o CMakeFiles/jabddl.dir/src/vertex.cpp.o CMakeFiles/jabddl.dir/src/expr.cpp.o CMakeFiles/jabddl.dir/src/main_test.cpp.o -o jabddl 
