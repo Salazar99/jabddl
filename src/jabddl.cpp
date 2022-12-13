@@ -1,5 +1,5 @@
-#include "jabddl.hpp"
-int verbosity = 0;
+#include "../include/jabddl.hpp"
+
 namespace jabddl {
 
 //unique table to represent the vertices of all robdds
@@ -9,143 +9,6 @@ void initialize() {
     unique_table.push_back(v0);
     unique_table.push_back(v1);
 }
-
-//0 and 1 variables used to evaluate expressions
-auto v0_v = std::string("v0");
-auto v1_v = std::string("v1");
-
-vertex::vertex(const std::string& name)
-: root{{name}} {}
-
-expr::expr() : type{expr_type::Var} { }
-expr::~expr() {
-    if (type == expr_type::Var)
-        delete var.name;
-}
-
-//* == and, + == or
-expr_ptr expr::make_add(expr_ptr a, expr_ptr b) {
-    auto res = new expr{};
-    res->type = expr_type::Add;
-    res->args.l = a;
-    res->args.r = b;
-    return res;
-}
-expr_ptr expr::make_mul(expr_ptr a, expr_ptr b) {
-    auto res = new expr{};
-    res->type = expr_type::Mul;
-    res->args.l = a;
-    res->args.r = b;
-    return res;
-}
-expr_ptr expr::make_neg(expr_ptr n) {
-    auto res = new expr{};
-    res->type = expr_type::Not;
-    res->arg.c = n;
-    return res;
-}
-expr_ptr expr::make_var(const std::string& var) {
-    auto res = new expr{};
-    res->var.name = new std::string(var);
-    return res;
-};
-
-expr_ptr ite(expr_ptr a, expr_ptr b, expr_ptr c) {
-
-    // If a then b (a*b)
-    auto choise1 = expr::make_mul(a, b);
-    
-    // if not a then c  (!a*c)
-    auto neg_a = expr::make_neg(a);
-    auto choise2 = expr::make_mul(neg_a, c);
-
-    // x1 is 1 or 0 (choice1 + choice2)
-    return expr::make_add(choise1, choise2);
-}
-
-static void print_rec(std::stringstream& stream, const expr_ptr expr) {
-    switch (expr->type) {
-        case expr_type::Add: {
-            stream << "(";
-            print_rec(stream, expr->args.l);
-            stream << " + ";
-            print_rec(stream, expr->args.r);
-            stream << ")";
-        } break;
-        case expr_type::Mul: {
-            stream << "(";
-            print_rec(stream, expr->args.l);
-            stream << " * ";
-            print_rec(stream, expr->args.r);
-            stream << ")";
-        } break;
-        case expr_type::Not: {
-            stream << "!";
-            print_rec(stream, expr->arg.c);
-        } break;
-        case expr_type::Var: {
-            stream << *expr->var.name;
-        } break;
-    }
-}
-
-void expr::print(const expr_ptr expr) {
-    std::stringstream stream;
-    print_rec(stream, expr);
-    std::cout << stream.str() << std::endl;
-}
-
-/// @brief support function to print tree starting from root
-/// @param stream stringstream to print
-/// @param vert root
-/// @param depth depth of the recursion at the moment (used for formatting)
-static void print_vert_rec(std::stringstream& stream, vertex_ptr vert, int depth){
-     ++depth;
-
-    if(vert->root == "v0" || vert->root == "v1")
-    {
-        stream << "\n";
-        for(int i = 1; i < depth-1; i++) stream << " |";
-        if(depth >1) stream << " L";
-        stream << "[" << vert->root << "]";
-    }
-    else
-    {
-       
-        stream << "\n";
-        for(int i = 1; i < depth-1; i++) stream << " |";
-        if(depth >1) stream << " +";
-        stream << "[" << vert->root << "]";
-        print_vert_rec(stream, vert->lsubtree,depth );
-        print_vert_rec(stream,vert->rsubtree, depth);
-       
-    }
-   
-}
-
-/// @brief Print bdd 
-/// @param vert root of the bdd
-void vertex::print(const vertex_ptr vert){
-    std::stringstream stream;
-    print_vert_rec(stream, vert, 0);
-    if(verbosity) std::cout<<"The format of the print is:\n[root]\n" <<" +[left-child]\n" <<" L[right-child]\n";
-    std::cout << stream.str() <<std::endl;
-}
-
-/// @brief constructor for non complemented bdds
-/// @param root bdd root
-/// @param l left child
-/// @param r right child
-vertex::vertex(const std::string& root, vertex_ptr l, vertex_ptr r) 
-: root{root}, lsubtree{l}, rsubtree{r} { }
-
-/// @brief constructor for complemented edges bdds
-/// @param root bdd root
-/// @param l left child
-/// @param r right child
-vertex::vertex(const std::string& root, vertex_ptr l, vertex_ptr r, bool complemented_l, bool complemented_r)
-: root{root}, lsubtree{l}, rsubtree{r}, complemented_l{complemented_l}, complemented_r{complemented_r} {}
-
 
 vertex_ptr old_or_new(const std::string& root, vertex_ptr lst, vertex_ptr rst){
     
@@ -191,133 +54,6 @@ vertex_ptr old_or_new_comp(const std::string& root, vertex_ptr lst, vertex_ptr r
     }
 }
 
-/// @brief Evaluate given function
-/// @param root expression 
-/// @param var  variable to which evaluate
-/// @param value variable value for evaluation (T|F)
-/// @return pointer to evaluated expression
-expr_ptr evaluate(expr_ptr root, const std::string& var, bool value) {
-    if(root->type == jabddl::expr_type::Var && *root->var.name == var){
-              if(value)
-                root->var.name = new std::string(v1_v);
-              else
-                root->var.name = new std::string(v0_v);
-              return root;
-    }
-    
-    switch(root->type){
-        case jabddl::expr_type::Mul: {
-            root->args.l = evaluate(root->args.l, var, value);
-            root->args.r = evaluate(root->args.r, var, value);
-
-            //0 * 0 = 0
-            if(*root->args.l->var.name == v0_v || *root->args.r->var.name == v0_v)
-                return expr::make_var(v0_v);
-
-            // 1 * 1 = 1
-            if(*root->args.l->var.name == v1_v && *root->args.r->var.name == v1_v)
-                return  expr::make_var(v1_v);
-
-            // 1 * x = x
-            if (*root->args.l->var.name == v1_v)
-                return root->args.r;
-
-            // x * 1 = x
-            if (*root->args.r->var.name == v1_v)
-                return root->args.l;
-
-            // 0 * x = 0
-            if(*root->args.l->var.name == v0_v)
-                return expr::make_var(v0_v);
-            // x * 0 = 0
-            if(*root->args.r->var.name == v0_v)
-                return expr::make_var(v0_v);
-
-            
-            return root;
-        } break;
-        case jabddl::expr_type::Add:{
-            root->args.l = evaluate(root->args.l, var, value);
-            root->args.r = evaluate(root->args.r, var, value);
-            
-            //0 + 0 = 0
-            if(*root->args.l->var.name == v0_v && *root->args.r->var.name == v0_v)
-                return expr::make_var(v0_v);
-
-            //1 + 1 = 1
-            if(*root->args.l->var.name == v1_v && *root->args.r->var.name == v1_v)
-                return expr::make_var(v1_v);    
-
-            //0 + x = x
-            if(*root->args.l->var.name == v0_v)
-                return root->args.r;
-            //x + 0 = 0 
-             if(*root->args.r->var.name == v0_v)
-                return root->args.l;
-
-            //1 + x = 1 
-            if(*root->args.l->var.name == v1_v)
-                return expr::make_var(v1_v);    
-            //x + 1 = 1 
-            if(*root->args.r->var.name == v1_v)
-                return expr::make_var(v1_v);              
-
-            return root;
-        }    break;
-
-        case jabddl::expr_type::Not:{
-            auto res = evaluate(root->arg.c, var, value);
-            if(res->type == jabddl::expr_type::Var){
-                if(*res->var.name == v0_v){
-                    return expr::make_var(v1_v);
-                }    
-                else if(*res->var.name == v1_v){
-                    return expr::make_var(v0_v);
-                }  
-            }
-            return root;
-        }break;
-
-        case jabddl::expr_type::Var:{
-            return root;
-        }break;
-
-        default:{
-            break;
-            return root;
-        }
-    } 
-    exit(-1);
-}
-
-/// @brief Support function for deep copy of expression 
-/// @param root expression to be copied
-/// @return pointer to a new instance of root expression
-expr_ptr copy_expr_rec(const expr_ptr root) {
-    
-    // Copied expr
-    expr_ptr result = new expr{};
-    result->type = root->type;
-
-    // Copy childrens
-    switch (result->type) {
-        case expr_type::Add:
-        case expr_type::Mul: {
-
-            result->args.l = copy_expr_rec(root->args.l);
-            result->args.r = copy_expr_rec(root->args.r);
-        } break;
-        case expr_type::Not: {
-            result->arg.c = copy_expr_rec(root->arg.c);
-        } break;
-        case expr_type::Var: {
-            result->var.name = new std::string(*root->var.name);
-        } break;
-    }
-
-    return result;
-}
-
 bool vertex_compare(vertex_ptr vertex1,vertex_ptr vertex2){
     bool result = false;
     if((vertex1->root == "v0" && vertex2->root == "v0") || (vertex1->root == "v1" && vertex2->root == "v1"))
@@ -339,7 +75,7 @@ vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<std::string>& ord) {
      vertex_ptr l,r;
      std::string root;
 
-    if(f->type == jabddl::expr_type::Var && (*f->var.name == v0_v || *f->var.name == v1_v))
+    if(f->type == expr_type::Var && (*f->var.name == v0_v || *f->var.name == v1_v))
     {
         if(*f->var.name == v0_v)
             return v0;
@@ -394,7 +130,7 @@ vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& o
      bool lcomp = false;
      bool rcomp = false;
 
-    if(f->type == jabddl::expr_type::Var && (*f->var.name == v0_v || *f->var.name == v1_v))
+    if(f->type == expr_type::Var && (*f->var.name == v0_v || *f->var.name == v1_v))
     {
         if(*f->var.name == v0_v)
             return v0;
@@ -437,29 +173,6 @@ vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& o
     }
 
     exit(-1);
-}
-
-/// @brief Calculate vertex cofactor w.r.t. a variable
-/// @param root vertex to be co-factorize
-/// @param var variable 
-/// @param value boolean value for the co-factorization
-/// @return pointer to vertex cofactor
-vertex_ptr vertex_cofactor(vertex_ptr root, const std::string& var, bool value){
-    if(root->root == var)
-    {
-        if(value)
-            return root->lsubtree;
-        else 
-            return root->rsubtree;
-    }
-    else if(root->root == "v0" || root->root == "v1")
-        return root; 
-    else
-    {
-        root->lsubtree = vertex_cofactor(root->lsubtree, var, value);
-        root->rsubtree = vertex_cofactor(root->rsubtree, var, value);
-        return root;
-    }
 }
 
 vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std::vector<std::string>& ord){
@@ -539,32 +252,6 @@ void print_table(std::vector<vertex_ptr> unique_table){
             i, v->root.c_str(), v.get(), lbuf, rbuf);
         
         i += 1;
-    }
-}
-
-/// @brief Support function for the truth table print
-/// @param root vertex root
-/// @param ord order in which we want to evaluate 
-/// @param truthVector vector of bool values that is used to evaluate the variables 
-/// @param i depth index, used to choose the correct value from truthVector
-/// @return evaluation value for the function
-bool evaluate_vertex(vertex_ptr root,const std::vector<std::string>& ord,std::vector<bool>& truthVector,int i){
-    //no further evaluation is needed
-    if(root->root == "v0")
-        return false;
-    else if( root->root == "v1") 
-        return true;
-    //We are matching the current variable to evaluate
-    else if(root->root == ord[i])
-    {    
-        if(truthVector[i] == true)
-           return evaluate_vertex(root->lsubtree,ord,truthVector,i+1);
-        else return evaluate_vertex(root->rsubtree,ord,truthVector,i+1);
-    }
-    //root is not v0 or v1 but current order var does not match --> try next variable in order
-    else
-    { 
-       return evaluate_vertex(root, ord, truthVector,i+1);
     }
 }
 
@@ -664,13 +351,13 @@ jabddl::expr_ptr parse_ite_parts(std::string ite_part, jabddl::context &cntx){
                     if(verbosity){
                         std::cout << "Function: " << f_name << " Evaluated for variable: " <<var_str << " positive cofactor" <<std::endl;
                     }
-                    return jabddl::evaluate(jabddl::ite(f.ite_if,f.ite_then,f.ite_else),var_str,true);
+                    return evaluate(ite(f.ite_if,f.ite_then,f.ite_else),var_str,true);
                 }
                 else{
                     if(verbosity){
                         std::cout << "Function: " << f_name << " Evaluated for variable: " <<var_str << " negative cofactor" <<std::endl;
                      }
-                    return jabddl::evaluate(jabddl::ite(f.ite_if,f.ite_then,f.ite_else),var_str,false);
+                    return evaluate(ite(f.ite_if,f.ite_then,f.ite_else),var_str,false);
                 }
             }
             else{
@@ -688,7 +375,7 @@ jabddl::expr_ptr parse_ite_parts(std::string ite_part, jabddl::context &cntx){
             if(verbosity){
                 std::cout << "Function: " << match_obj.str()  <<std::endl;
             }
-            return jabddl::ite(f.ite_if,f.ite_then,f.ite_else);
+            return ite(f.ite_if,f.ite_then,f.ite_else);
         }
     //if regex matches a variable 
     }else if(std::regex_search(ite_part, match_obj, p_var)){
@@ -697,7 +384,7 @@ jabddl::expr_ptr parse_ite_parts(std::string ite_part, jabddl::context &cntx){
             if(verbosity){
                 std::cout << "Variable: " <<match_obj.str()  <<std::endl;
             }
-            return jabddl::expr::make_var(match_obj.str());
+            return expr::make_var(match_obj.str());
         }
         else{
             std::cout << "Trying to reference a variable that has never been declared!! " <<std::endl;
@@ -710,7 +397,7 @@ jabddl::expr_ptr parse_ite_parts(std::string ite_part, jabddl::context &cntx){
         if(verbosity){
             std::cout << "constant: " <<match_obj.str()  <<std::endl;
         }
-        return jabddl::expr::make_var("v"+match_obj.str());
+        return expr::make_var("v"+match_obj.str());
     }
     else{
         std::cout << "Impossible to have a match on ite_part: " << ite_part <<std::endl;
@@ -765,10 +452,6 @@ void parse_func(jabddl::fun &func, std::string line_expr, jabddl::context &cntx)
     
 }
 
-/// @brief Function to parse input file
-/// @param file nameFile
-/// @param order vector in which we memorize the order of the variables to be used
-/// @param cntx context variable
 void parse_input(std::string file, std::vector<std::string> &order, jabddl::context &cntx){
     std::ifstream infile(file);
     std::string line;
