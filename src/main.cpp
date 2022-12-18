@@ -69,7 +69,6 @@ int main(int argc, char **argv) {
         std::cout << std::endl;
     }
 
-
     for (auto &f : cntx.funcs)
     {
         jabddl::fun function = f.second;
@@ -87,7 +86,6 @@ int main(int argc, char **argv) {
             jabddl::print_truth_table(f.second, cntx.vars);
             std::cout << std::endl << std::endl;
         }
-    
     }
 
     return 0;
