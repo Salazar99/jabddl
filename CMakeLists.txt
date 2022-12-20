@@ -12,7 +12,20 @@ add_executable(jabddl
     src/vertex.cpp
     include/expr.hpp
     src/expr.cpp
-    src/main_test.cpp)
+    src/main.cpp)
+
+add_executable(jabddl_test
+
+    include/jabddl.hpp
+    src/jabddl.cpp
+    include/vertex.hpp
+    src/vertex.cpp
+    include/expr.hpp
+    src/expr.cpp
+    src/test.cpp)
 
  target_compile_features(jabddl PRIVATE cxx_std_17)   
  target_compile_options(jabddl PRIVATE -Wall -Wextra -Wpedantic)
+ 
+ target_compile_features(jabddl_test PRIVATE cxx_std_17)   
+ target_compile_options(jabddl_test PRIVATE -Wall -Wextra -Wpedantic)
