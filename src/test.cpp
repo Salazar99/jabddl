@@ -92,23 +92,61 @@ int main() {
     jabddl::vertex_ptr f_vert = jabddl::robdd_build_comp(f,0,order5);
     jabddl::vertex_ptr g_vert = jabddl::robdd_build_comp(g,0,order5);
     jabddl::vertex_ptr h = jabddl::apply_ite(f_vert,g_vert,jabddl::v1,0,order5);
-
+    std::cout << "Function f" << std::endl;
     vertex::print(f_vert);
+    std::cout << "Function g" << std::endl;
+    vertex::print(g_vert);
+    std::cout << "Function h" << std::endl;
     vertex::print(h);
 
 //    f = ab + c   ordine a b c d, lati complementati
 //    g = bc' + d
 //    h = c + d'
 //    ite(f,g,h)
+    f = expr::make_add(ab,c);
+    expr_ptr bc_neg = expr::make_mul(b,c_neg);
+    g = expr::make_add(bc_neg,d);
+    expr_ptr h_expr = expr::make_add(c,d_neg);
+    std::vector<std::string> order6 = {"b","c","d"};
+    std::vector<std::string> order7 = {"c","d"};
 
+    f_vert = jabddl::robdd_build_comp(f,0,order4);
+    g_vert = jabddl::robdd_build_comp(g,0,order6);
+    h = jabddl::robdd_build_comp(h_expr,0,order7);
+
+    vertex_ptr k = jabddl::apply_ite_comp(f_vert,g_vert,h,0,order7);
 
 //    f = abd' + ab'd + a'c + a'c'd    ordine a b c d, lati complementati
 
+   expr_ptr abd_neg = expr::make_mul(ab,d_neg);
+   expr_ptr b_neg = expr::make_neg(b);
+   expr_ptr ab_neg = expr::make_mul(a,b_neg);
+   expr_ptr ab_negd = expr::make_mul(ab_neg,d);
+   expr_ptr a_neg = expr::make_neg(a);
+   expr_ptr a_negc = expr::make_mul(a_neg,c); 
+   expr_ptr a_negc_neg = expr::make_mul(a_neg,c_neg);
+   expr_ptr a_negc_negd = expr::make_mul(a_negc_neg,d);
+   first_add = expr::make_add(abd_neg,ab_negd);
+   second_add = expr::make_add(a_negc,a_negc_negd);
+   f = expr::make_add(first_add,second_add);
+
+   f_vert = jabddl::robdd_build_comp(f,0,order5); 
+
 
 //    f = abc + a'c'd'    ordine a b c d, lati complementati
+   expr_ptr a_negc_negd_neg = expr::make_mul(a_negc_neg,d_neg);
+   f = expr::make_add(abc,a_negc_negd_neg); 
+   f_vert = jabddl::robdd_build_comp(f,0,order5); 
 
 
 //    f = (a + be)(d + c)    ordine a b e d c, lati complementati
+   expr_ptr be = expr::make_mul(b,e);
+   first_add = expr::make_add(a,be);
+   second_add = expr::make_add(d,c);
+   f = expr::make_mul(first_add,second_add); 
+   std::vector<std::string> order8 = {"a","b","e","d","c"};
+
+   f_vert = jabddl::robdd_build_comp(f,0,order8); 
 
 
 //    f = a + b'c  ordine a b c d, lati complementati
@@ -116,11 +154,32 @@ int main() {
 //    h = b + c' + d
 //    ite(f,g,h)
 
+   expr_ptr b_negc = expr::make_mul(b_neg,c);
+   f = expr::make_add(a,b_negc); 
+   g = expr::make_add(b_negc,d);
+   expr_ptr b_c_neg = expr::make_add(b,c_neg);
+   h_expr = expr::make_add(b_c_neg,d);
+
+   f_vert = jabddl::robdd_build_comp(f,0,order5);
+   g_vert = jabddl::robdd_build_comp(g,0,order5);
+   vertex_ptr h_vert = jabddl::robdd_build_comp(h_expr,0,order5);
+
+   k = jabddl::apply_ite_comp(f_vert,g_vert,h_vert,0,order5);  
 
 //    f = b + cd   ordine a b c d, lati complementati
 //    g = b + cd
 //    h = a'c + b
 //    ite(f,g,h)
+   f = expr::make_add(b,cd);
+   g = expr::make_add(b,cd);
+   h_expr = expr::make_add(a_negc,b);   
+
+   f_vert = jabddl::robdd_build_comp(f,0,order5);
+   g_vert = jabddl::robdd_build_comp(g,0,order5);
+   h_vert = jabddl::robdd_build_comp(h_expr,0,order5);
+
+   k = jabddl::apply_ite_comp(f_vert,g_vert,h_vert,0,order5);  
+
 
 return 0;
 }

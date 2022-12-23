@@ -4,10 +4,16 @@ namespace jabddl {
 
 //unique table to represent the vertices of all robdds
 std::vector<vertex_ptr> unique_table;
+std::vector<vertexc_ptr> unique_table_c;
 
 void initialize() {
     unique_table.push_back(v0);
     unique_table.push_back(v1);
+}
+
+void initialize_comp() {
+    unique_table_c.push_back(v0_c);
+    unique_table_c.push_back(v1_c);
 }
 
 vertex_ptr old_or_new(const std::string& root, vertex_ptr lst, vertex_ptr rst){
@@ -32,24 +38,24 @@ vertex_ptr old_or_new(const std::string& root, vertex_ptr lst, vertex_ptr rst){
     }
 }
 
-vertex_ptr old_or_new_comp(const std::string& root, vertex_ptr lst, vertex_ptr rst,bool l_comp, bool r_comp){
+vertexc_ptr old_or_new_comp(const std::string& root, vertexc_ptr lst, vertexc_ptr rst,bool l_comp, bool r_comp){
     
-    vertex_ptr v;
-    auto result = lookup_comp(unique_table, root, lst, rst, l_comp,r_comp);
+    vertexc_ptr v;
+    auto result = lookup_comp(unique_table_c, root, lst, rst, l_comp,r_comp);
     if (result.has_value())
         return *result;
     else
     {
         /*create a new vertex*/
-        auto l_tree = lookup_comp(unique_table,lst->root,lst->lsubtree,lst->rsubtree,l_comp,r_comp);
-        auto r_tree = lookup_comp(unique_table,rst->root,rst->lsubtree,rst->rsubtree,l_comp,r_comp);
+        auto l_tree = lookup_comp(unique_table_c,lst->root,lst->lsubtree,lst->rsubtree,l_comp,r_comp);
+        auto r_tree = lookup_comp(unique_table_c,rst->root,rst->lsubtree,rst->rsubtree,l_comp,r_comp);
         if(l_tree.has_value())
             lst = l_tree.value(); 
         if(r_tree.has_value())
             rst = r_tree.value();   
-        v = std::make_shared<vertex>(root, lst, rst, l_comp, r_comp);
+        v = std::make_shared<vertex_comp>(root, lst, rst, l_comp, r_comp);
         //adds it to the unique table
-        unique_table.push_back(v);
+        unique_table_c.push_back(v);
         return v;
     }
 }
@@ -124,8 +130,8 @@ bool vertex_compare_comp(vertex_ptr vertex1,vertex_ptr vertex2){
     return result;
 }
 
-vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& ord) {
-     vertex_ptr l,r;
+vertexc_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& ord) {
+     vertexc_ptr l,r;
      std::string root;
      bool lcomp = false;
      bool rcomp = false;
@@ -133,9 +139,9 @@ vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& o
     if(f->type == expr_type::Var && (*f->var.name == v0_v || *f->var.name == v1_v))
     {
         if(*f->var.name == v0_v)
-            return v0;
+            return v0_c;
         if(*f->var.name == v1_v)
-            return v1; 
+            return v1_c; 
     }
     else
     {
@@ -150,7 +156,7 @@ vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& o
         if(l->root == v0->root)
         {
             lcomp = true;
-            l = v1;
+            l = v1_c;
         }
         if(verbosity == 2) std::cout<< "f evaluated for: " << ord[i] <<" positive\n";
 
@@ -162,7 +168,7 @@ vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& o
         if(r->root == v0->root)
         {
             rcomp = true;
-            r = v1;
+            r = v1_c;
         }
         if(verbosity == 2) std::cout<< "f evaluated for: " << ord[i] <<" negative\n";
 
@@ -198,6 +204,44 @@ vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std:
     }
 }
 
+vertexc_ptr apply_ite_comp(vertexc_ptr f, vertexc_ptr g, vertexc_ptr h, vertexc_ptr f_old,vertexc_ptr g_old,vertexc_ptr h_old,vertexc_ptr vertex_ref,int i ,const std::vector<std::string>& ord, bool valuation){
+     vertexc_ptr l,r;
+     std::string root;
+    if(f->root  == "v1"){
+        //referring to lsubtree and not complemented
+        if(valuation && !f_old->complemented_l)
+            return g; //TODO capire come dire a vertex_ref se g è complemented o no 
+        //referring to lsubtree and complemented
+        else if(valuation && f_old->complemented_l)
+            return h;
+        //referring to rightsubtree and not complemented
+        else if(!valuation && !f_old->complemented_r)
+            return h;
+        //referring to rightsubtree and complemented
+        else if(!valuation && f_old->complemented_r)
+            return g;
+    }//if both functions fg + !fh are true, then return simply f
+    else if (g->root == "v1" && h->root == "v1")
+        return f;
+    else
+    {
+        root = ord[i];
+        vertexc_ptr new_vertex = std::make_shared<vertex_comp>(root,l,r,false,false);
+
+        if(f_old != nullptr && f_old->complemented_l){
+            //valuta la funzione con r e l scambiati
+        }else if (f_old == nullptr || !f_old->complemented_l){
+        new_vertex->lsubtree = apply_ite_comp(vertex_cofactor_comp(f,ord[i],true),vertex_cofactor_comp(g,ord[i],true),vertex_cofactor_comp(h,ord[i],true),f,g,h,new_vertex,i+1,ord, true);
+        new_vertex->rsubtree = apply_ite_comp(vertex_cofactor_comp(f,ord[i],false),vertex_cofactor_comp(g,ord[i],false),vertex_cofactor_comp(h,ord[i],false),f,g,h,new_vertex,i+1,ord, false);
+        }
+
+        if(vertex_compare_comp(l,r))
+            return l;
+        else 
+            return old_or_new_comp(new_vertex);
+    }
+}
+
 /// @brief Check for the presence of a vertex in the unique table 
 /// @param unique_table table of vertexes
 /// @param root vertex root
@@ -221,11 +265,11 @@ std::optional<vertex_ptr> lookup(const std::vector<vertex_ptr>& unique_table, co
 /// @param lcomp is l subtree complemented?
 /// @param rcomp is r subtree complemented?
 /// @return pointer to vertex if found, nothing otherwise
-std::optional<vertex_ptr> lookup_comp(const std::vector<vertex_ptr>& unique_table, const std::string& root, vertex_ptr lst, vertex_ptr rst, bool lcomp, bool rcomp){
-    for (auto& vertex : unique_table)
+std::optional<vertexc_ptr> lookup_comp(const std::vector<vertexc_ptr>& unique_table, const std::string& root, vertexc_ptr lst, vertexc_ptr rst, bool lcomp, bool rcomp){
+    for (auto& vertex : unique_table_c)
     {
         if (vertex->root == root && vertex->lsubtree == lst && vertex->rsubtree == rst && vertex->complemented_l == lcomp && vertex->complemented_r == rcomp)
-            return std::make_optional<vertex_ptr>(vertex);
+            return std::make_optional<vertexc_ptr>(vertex);
     }
     return std::nullopt;
 }
@@ -312,7 +356,8 @@ void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord){
 /// @param cntx context object to be populated
 /// @return expression representing the ite_part 
 jabddl::expr_ptr parse_ite_parts(std::string ite_part, jabddl::context &cntx){
-    std::regex p_const("\\s*([0-1])"), p_var("\\s*([a-z][0-9])"), p_fun("F[0-9]"), p_f_op("(F[0-9]\\+F[0-9])+|(F[0-9]\\-F[0-9])+|(F[0-9]\\+[a-z][0-9])+|(F[0-9]\\-[a-z][0-9])+|(F[0-9]\\+[0-1])+|(F[0-9]\\-[0-1])+"), p_op("(F[0-9])|(\\-|\\+)|([a-z][0-9])");
+    std::regex p_const("\\s*([0-1])"), p_var("\\s*([a-z][0-9])"), p_fun("F[0-9]"), p_f_op("(F[0-9]\\+F[0-9])+|(F[0-9]\\-F[0-9])+|(F[0-9]\\+[a-z][0-9])+|(F[0-9]\\-[a-z][0-9])+|(F[0-9]\\+[0-1])+|(F[0-9]\\-[0-1])+"),
+               p_op("(F[0-9])|(\\-|\\+)|([a-z][0-9])"), p_negvar("\\s*(\\![a-z][0-9])");
     std::smatch match_obj;
 
     if(verbosity) std::cout << "Beginning parsing of: " << ite_part << std::endl;
@@ -376,7 +421,28 @@ jabddl::expr_ptr parse_ite_parts(std::string ite_part, jabddl::context &cntx){
             }
             return ite(f.ite_if,f.ite_then,f.ite_else);
         }
-    //if regex matches a variable 
+    //if regex matches a negation of variable 
+    }else if(std::regex_search(ite_part, match_obj, p_negvar)){
+        std::string notvar = match_obj.str();
+        if(std::regex_search(notvar, match_obj, p_var)){
+            if(std::find(cntx.vars.begin(), cntx.vars.end(), match_obj.str()) != cntx.vars.end()){
+                //return a expr_ptr variable 
+                if(verbosity){
+                    std::cout << "Variable: " <<match_obj.str()  <<std::endl;
+                }
+                //add a negative variable to ite_part
+                return expr::make_neg(expr::make_var(match_obj.str()));
+            }
+            else{
+                std::cout << "Trying to reference a variable that has never been declared!! " <<std::endl;
+                exit(-1);
+            }
+        }
+        else{
+            std::cout << "Error parsing variable for a !var " <<std::endl;
+            exit(-1);
+        }
+    //if regex matches a variable     
     }else if(std::regex_search(ite_part, match_obj, p_var)){
         if(std::find(cntx.vars.begin(), cntx.vars.end(), match_obj.str()) != cntx.vars.end()){
             //return a expr_ptr variable 

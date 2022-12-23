@@ -9,6 +9,7 @@
 #include <cmath>
 #include "vertex.hpp"
 #include "expr.hpp"
+#include "vertex_comp.hpp"
 
 extern int verbosity;
 
@@ -41,6 +42,10 @@ struct context{
 static inline vertex_ptr v0 = std::make_shared<vertex>("v0");
 static inline vertex_ptr v1 = std::make_shared<vertex>("v1");
 
+//0 and 1 leaf 
+static inline vertexc_ptr v0_c = std::make_shared<vertex_comp>("v0");
+static inline vertexc_ptr v1_c = std::make_shared<vertex_comp>("v1");
+
 //unique table to represent the vertices of all robdds
 extern std::vector<vertex_ptr> unique_table;
 
@@ -62,7 +67,7 @@ vertex_ptr old_or_new(const std::string& root, vertex_ptr lst, vertex_ptr rst);
 ///@param root is the pointer to the root of the vertex to analyse, 
 ///@param lst left subtree.
 ///@param rst right subtree. 
-vertex_ptr old_or_new_comp(const std::string& root, vertex_ptr lst, vertex_ptr rst);
+vertexc_ptr old_or_new_comp(const std::string& root, vertex_ptr lst, vertex_ptr rst);
 
 ///@brief: Takes in input an expression and first variable and return the 
 ///        pointer to the root of the robdd
@@ -75,7 +80,7 @@ vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<std::string>& ord);
 ///        Works with complemented edges
 ///@param f is the expression on wich the bdd must be built,
 ///@param i vector of variables giving the order in which to calculate shannon expansion 
-vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& ord);
+vertexc_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& ord);
 
 ///@brief Given a vertex, it checks if it is present inside the unique table and returns it
 ///@param unique_table is a pointer to the unique table of vertices;
@@ -90,7 +95,7 @@ std::optional<vertex_ptr> lookup(const std::vector<vertex_ptr>& unique_table, co
 ///@param root is the pointer to the root of the vertex to analyse, 
 ///@param lst left subtree.
 ///@param rst right subtree.       
-std::optional<vertex_ptr> lookup_comp(const std::vector<vertex_ptr>& unique_table, const std::string& root, vertex_ptr lst, vertex_ptr rst, bool lcomp, bool rcomp);
+std::optional<vertexc_ptr> lookup_comp(const std::vector<vertexc_ptr>& unique_table, const std::string& root, vertexc_ptr lst, vertexc_ptr rst, bool lcomp, bool rcomp);
 
 ///@brief Given two vertex pointers, it compares them to enstablish if they're equal.
 ///@param vertex1 pointer to a vertex structure;
@@ -100,7 +105,7 @@ bool vertex_compare(vertex_ptr vertex1,vertex_ptr vertex2);
 ///@brief Given two vertex pointers, it compares them to enstablish if they're equal.
 ///@param vertex1 pointer to a vertex structure;
 ///@param vertex2 pointer to a vertex structure;       
-bool vertex_compare_comp(vertex_ptr vertex1,vertex_ptr vertex2);
+bool vertex_compare_comp(vertexc_ptr vertex1,vertexc_ptr vertex2);
 
 ///@brief Given three functions it apply ite procedue to obtain a new function = f*g + !f*h.
 ///@param f pointer to a vertex structure that represent f;
@@ -113,7 +118,7 @@ vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std:
 ///@param f pointer to a vertex structure that represent f;
 ///@param g pointer to a vertex structure that represent g;       
 ///@param h pointer to a vertex structure that represent h;
-vertex_ptr apply_ite_comp(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std::vector<std::string>& ord);
+vertexc_ptr apply_ite_comp(vertexc_ptr f, vertexc_ptr g, vertexc_ptr h, int i ,const std::vector<std::string>& ord);
 
 /// @brief Prints the unique table 
 /// @param unique_table 
