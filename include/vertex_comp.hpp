@@ -28,18 +28,3 @@ struct vertex_comp {
     /// @param vert root of the bdd
     static void print(const vertexc_ptr vert);
 };
-
-/// @brief Calculate vertex cofactor w.r.t. a variable
-/// @param root vertex to be co-factorize
-/// @param var variable 
-/// @param value boolean value for the co-factorization
-/// @return pointer to vertex cofactor
-vertexc_ptr vertex_cofactor_comp(vertexc_ptr root, const std::string& var, bool value);
-
-/// @brief Support function for the truth table print
-/// @param root vertex root
-/// @param ord order in which we want to evaluate 
-/// @param truthVector vector of bool values that is used to evaluate the variables 
-/// @param i depth index, used to choose the correct value from truthVector
-/// @return evaluation value for the function
-bool evaluate_vertex_comp(vertexc_ptr root,const std::vector<std::string>& ord,std::vector<bool>& truthVector,int i);

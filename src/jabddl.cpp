@@ -4,17 +4,12 @@ namespace jabddl {
 
 //unique table to represent the vertices of all robdds
 std::vector<vertex_ptr> unique_table;
-std::vector<vertexc_ptr> unique_table_c;
 
 void initialize() {
     unique_table.push_back(v0);
     unique_table.push_back(v1);
 }
 
-void initialize_comp() {
-    unique_table_c.push_back(v0_c);
-    unique_table_c.push_back(v1_c);
-}
 
 vertex_ptr old_or_new(const std::string& root, vertex_ptr lst, vertex_ptr rst){
     
@@ -38,29 +33,29 @@ vertex_ptr old_or_new(const std::string& root, vertex_ptr lst, vertex_ptr rst){
     }
 }
 
-vertexc_ptr old_or_new_comp(const std::string& root, vertexc_ptr lst, vertexc_ptr rst,bool l_comp, bool r_comp){
+vertex_ptr old_or_new_comp(vertex_ptr root){
     
-    vertexc_ptr v;
-    auto result = lookup_comp(unique_table_c, root, lst, rst, l_comp,r_comp);
+    vertex_ptr v;
+    auto result = lookup_comp(unique_table, root->root, root->lsubtree, root->rsubtree, root->complemented_l, root->complemented_r);
     if (result.has_value())
         return *result;
     else
     {
         /*create a new vertex*/
-        auto l_tree = lookup_comp(unique_table_c,lst->root,lst->lsubtree,lst->rsubtree,l_comp,r_comp);
-        auto r_tree = lookup_comp(unique_table_c,rst->root,rst->lsubtree,rst->rsubtree,l_comp,r_comp);
+        auto l_tree = lookup_comp(unique_table,root->lsubtree->root,root->lsubtree->lsubtree,root->lsubtree->rsubtree,root->lsubtree->complemented_l,root->lsubtree->complemented_r);
+        auto r_tree = lookup_comp(unique_table,root->rsubtree->root,root->rsubtree->lsubtree,root->rsubtree->rsubtree,root->rsubtree->complemented_l,root->rsubtree->complemented_r);
         if(l_tree.has_value())
-            lst = l_tree.value(); 
+            root->lsubtree = l_tree.value(); 
         if(r_tree.has_value())
-            rst = r_tree.value();   
-        v = std::make_shared<vertex_comp>(root, lst, rst, l_comp, r_comp);
+            root->rsubtree = r_tree.value();   
+        v = std::make_shared<vertex>(root->root, root->lsubtree, root->rsubtree, root->complemented_l, root->complemented_r);
         //adds it to the unique table
-        unique_table_c.push_back(v);
+        unique_table.push_back(v);
         return v;
     }
 }
 
-bool vertex_compare(vertex_ptr vertex1,vertex_ptr vertex2){
+bool vertexare(vertex_ptr vertex1,vertex_ptr vertex2){
     bool result = false;
     if((vertex1->root == "v0" && vertex2->root == "v0") || (vertex1->root == "v1" && vertex2->root == "v1"))
     {
@@ -72,10 +67,41 @@ bool vertex_compare(vertex_ptr vertex1,vertex_ptr vertex2){
     }
     else if(vertex1->root != "v0" && vertex2->root != "v1" && vertex1->root != "v1" && vertex2->root != "v0")
     {
-        result = vertex_compare(vertex1->lsubtree,vertex2->lsubtree) && vertex_compare(vertex1->rsubtree,vertex2->rsubtree) && (vertex1->root == vertex2->root);
+        result = vertexare(vertex1->lsubtree,vertex2->lsubtree) && vertexare(vertex1->rsubtree,vertex2->rsubtree) && (vertex1->root == vertex2->root);
     }
     return result;
 }
+
+bool vertexare_comp(complemented_vertex vertex1,complemented_vertex vertex2){
+    //Base case
+    if(vertex1.root->root == "v1" && vertex2.root->root == "v1" && vertex1.complemented == vertex2.complemented)
+    {
+        return true;
+    }
+    //roots have same name but one of the two is complemented and the other no
+    else if(((vertex1.root->root == vertex2.root->root) && (vertex1.complemented != vertex2.complemented)) || (vertex1.root->root != vertex2.root->root))
+    {
+        return false;
+    }
+    //same name and same complementation, need to check for subtrees
+    else
+    {
+        complemented_vertex left1,left2,right1,right2;
+        left1.root= vertex1.root->lsubtree;
+        left1.complemented = vertex1.root->complemented_l;
+        left2.root= vertex2.root->lsubtree;
+        left2.complemented = vertex2.root->complemented_l;
+        
+        right1.root= vertex1.root->rsubtree;
+        right1.complemented = vertex1.root->complemented_r;
+        right2.root= vertex2.root->rsubtree;
+        right2.complemented = vertex2.root->complemented_r;
+
+
+        return vertexare_comp(left1,left2) && vertexare_comp(right2,right2) && (vertex1.root->root == vertex2.root->root);
+    }
+}
+
 
 vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<std::string>& ord) {
      vertex_ptr l,r;
@@ -101,7 +127,7 @@ vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<std::string>& ord) {
         r = robdd_build(evaluate(r_copy.get(), ord[i], false), i+1, ord);
         if(verbosity == 2) std::cout<< "f valutata per: " << ord[i] <<" neagativo\n";
     
-        if(vertex_compare(l,r)/*l->lsubtree == r->lsubtree && l->rsubtree == r->rsubtree*/)
+        if(vertexare(l,r)/*l->lsubtree == r->lsubtree && l->rsubtree == r->rsubtree*/)
             return l;
         else return old_or_new(root,l,r);
         
@@ -110,28 +136,8 @@ vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<std::string>& ord) {
     exit(-1);
 }
 
-bool vertex_compare_comp(vertex_ptr vertex1,vertex_ptr vertex2){
-    bool result = false;
-    //Base case
-    if(vertex1->root == "v1" && vertex2->root == "v1")
-    {
-        return true;
-    }
-    //roots have same name but one of the two is complemented and the other no
-    else if((vertex1->root == vertex2->root && (!(vertex1->complemented_l && vertex2->complemented_l) || !(vertex1->complemented_r && vertex2->complemented_r))) || (vertex1->root != vertex2->root))
-    {
-        return false;
-    }
-    //same name and same complementation, need to check for subtrees
-    else
-    {
-        result = vertex_compare(vertex1->lsubtree,vertex2->lsubtree) && vertex_compare(vertex1->rsubtree,vertex2->rsubtree) && (vertex1->root == vertex2->root);
-    }
-    return result;
-}
-
-vertexc_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& ord) {
-     vertexc_ptr l,r;
+vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& ord) {
+     vertex_ptr l,r;
      std::string root;
      bool lcomp = false;
      bool rcomp = false;
@@ -139,9 +145,9 @@ vertexc_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& 
     if(f->type == expr_type::Var && (*f->var.name == v0_v || *f->var.name == v1_v))
     {
         if(*f->var.name == v0_v)
-            return v0_c;
+            return v0;
         if(*f->var.name == v1_v)
-            return v1_c; 
+            return v1; 
     }
     else
     {
@@ -156,7 +162,7 @@ vertexc_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& 
         if(l->root == v0->root)
         {
             lcomp = true;
-            l = v1_c;
+            l = v1;
         }
         if(verbosity == 2) std::cout<< "f evaluated for: " << ord[i] <<" positive\n";
 
@@ -168,14 +174,22 @@ vertexc_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& 
         if(r->root == v0->root)
         {
             rcomp = true;
-            r = v1_c;
+            r = v1;
         }
         if(verbosity == 2) std::cout<< "f evaluated for: " << ord[i] <<" negative\n";
 
+        complemented_vertex left,right;
+        left.root = l;
+        left.complemented = lcomp;
+        right.root = r;
+        right.complemented = rcomp;
 
-        if(vertex_compare_comp(l,r) && (lcomp == rcomp)/*l->lsubtree == r->lsubtree && l->rsubtree == r->rsubtree*/)
+        if(vertexare_comp(left,right)/*l->lsubtree == r->lsubtree && l->rsubtree == r->rsubtree*/)
             return l;
-        return old_or_new_comp(root,l,r,lcomp,rcomp);
+        else{
+            vertex_ptr res = std::make_shared<vertex>(root,l,r,lcomp,rcomp);
+            return old_or_new_comp(res);
+        }
     }
 
     exit(-1);
@@ -197,50 +211,83 @@ vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std:
         l = apply_ite(vertex_cofactor(f,ord[i],true),vertex_cofactor(g,ord[i],true),vertex_cofactor(h,ord[i],true),i+1,ord);
         r = apply_ite(vertex_cofactor(f,ord[i],false),vertex_cofactor(g,ord[i],false),vertex_cofactor(h,ord[i],false),i+1,ord);
         
-        if(vertex_compare(l,r))
+        if(vertexare(l,r))
             return l;
         else 
             return old_or_new(root,l,r);
     }
 }
 
-vertexc_ptr apply_ite_comp(vertexc_ptr f, vertexc_ptr g, vertexc_ptr h, vertexc_ptr f_old,vertexc_ptr g_old,vertexc_ptr h_old,vertexc_ptr vertex_ref,int i ,const std::vector<std::string>& ord, bool valuation){
-     vertexc_ptr l,r;
+
+/// @brief 
+/// @param f 
+/// @param g 
+/// @param h 
+/// @param i 
+/// @param ord 
+/// @return 
+complemented_vertex apply_ite_comp_rec(complemented_vertex f, complemented_vertex g, complemented_vertex h,int i ,const std::vector<std::string>& ord){
+     vertex_ptr l,r;
      std::string root;
-    if(f->root  == "v1"){
+    //if finished to evaluate f 
+    if(f.root->root == "v1"){
         //referring to lsubtree and not complemented
-        if(valuation && !f_old->complemented_l)
-            return g; //TODO capire come dire a vertex_ref se g è complemented o no 
-        //referring to lsubtree and complemented
-        else if(valuation && f_old->complemented_l)
-            return h;
-        //referring to rightsubtree and not complemented
-        else if(!valuation && !f_old->complemented_r)
-            return h;
-        //referring to rightsubtree and complemented
-        else if(!valuation && f_old->complemented_r)
+        if(!f.complemented){
             return g;
-    }//if both functions fg + !fh are true, then return simply f
-    else if (g->root == "v1" && h->root == "v1")
+        }       
+        //referring to lsubtree and complemented
+        else{
+            return h;
+        }
+    }
+    //if both functions g and h are true, then return simply f
+    else if (g.root->root == "v1" && h.root->root == "v1" && g.complemented && !h.complemented){
         return f;
+    }
     else
     {
         root = ord[i];
-        vertexc_ptr new_vertex = std::make_shared<vertex_comp>(root,l,r,false,false);
+        vertex_ptr new_vertex = std::make_shared<vertex>(root,l,r,false,false);
+        complemented_vertex left, right, res;
 
-        if(f_old != nullptr && f_old->complemented_l){
-            //valuta la funzione con r e l scambiati
-        }else if (f_old == nullptr || !f_old->complemented_l){
-        new_vertex->lsubtree = apply_ite_comp(vertex_cofactor_comp(f,ord[i],true),vertex_cofactor_comp(g,ord[i],true),vertex_cofactor_comp(h,ord[i],true),f,g,h,new_vertex,i+1,ord, true);
-        new_vertex->rsubtree = apply_ite_comp(vertex_cofactor_comp(f,ord[i],false),vertex_cofactor_comp(g,ord[i],false),vertex_cofactor_comp(h,ord[i],false),f,g,h,new_vertex,i+1,ord, false);
+        left = apply_ite_comp_rec(vertex_cofactor_comp(f,ord[i],true),vertex_cofactor_comp(g,ord[i],true),vertex_cofactor_comp(h,ord[i],true),i+1,ord);
+        right = apply_ite_comp_rec(vertex_cofactor_comp(f,ord[i],false),vertex_cofactor_comp(g,ord[i],false),vertex_cofactor_comp(h,ord[i],false),i+1,ord);
+        
+        new_vertex->complemented_l = left.complemented;
+        new_vertex->complemented_r = right.complemented;
+        new_vertex->lsubtree = left.root;
+        new_vertex->rsubtree = right.root;
+        res.complemented = false;
+
+        if(vertexare_comp(left,right))
+            return left;
+        else{
+            res.root = old_or_new_comp(new_vertex);
+            return res;
         }
-
-        if(vertex_compare_comp(l,r))
-            return l;
-        else 
-            return old_or_new_comp(new_vertex);
     }
+
 }
+
+
+vertex_ptr apply_ite_comp(vertex_ptr f, vertex_ptr g, vertex_ptr h,int i ,const std::vector<std::string>& ord){
+    complemented_vertex f_c,g_c,h_c,result;
+    f_c.root = f;
+    f_c.complemented = false;
+    g_c.root = g;
+    g_c.complemented = false;
+    h_c.root = h;
+    h_c.complemented = false;
+
+    result = apply_ite_comp_rec(f_c,g_c,h_c,i,ord);
+
+    if(result.complemented)
+        std::cout << "The resulting function is to be considered complemented" <<std::endl;
+   
+    return result.root;
+    
+}
+
 
 /// @brief Check for the presence of a vertex in the unique table 
 /// @param unique_table table of vertexes
@@ -265,11 +312,11 @@ std::optional<vertex_ptr> lookup(const std::vector<vertex_ptr>& unique_table, co
 /// @param lcomp is l subtree complemented?
 /// @param rcomp is r subtree complemented?
 /// @return pointer to vertex if found, nothing otherwise
-std::optional<vertexc_ptr> lookup_comp(const std::vector<vertexc_ptr>& unique_table, const std::string& root, vertexc_ptr lst, vertexc_ptr rst, bool lcomp, bool rcomp){
-    for (auto& vertex : unique_table_c)
+std::optional<vertex_ptr> lookup_comp(const std::vector<vertex_ptr>& unique_table, const std::string& root, vertex_ptr lst, vertex_ptr rst, bool lcomp, bool rcomp){
+    for (auto& vertex : unique_table)
     {
         if (vertex->root == root && vertex->lsubtree == lst && vertex->rsubtree == rst && vertex->complemented_l == lcomp && vertex->complemented_r == rcomp)
-            return std::make_optional<vertexc_ptr>(vertex);
+            return std::make_optional<vertex_ptr>(vertex);
     }
     return std::nullopt;
 }
