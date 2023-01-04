@@ -8,6 +8,7 @@ A simple library to create and view functions using bdds.
 The library is written in c++17.
 To use it clone this repository and run:
     ```bash
+    
     foo@bar:~$ mkdir build && cd build
 
     foo@bar:~$ cmake ..
