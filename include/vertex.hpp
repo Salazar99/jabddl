@@ -59,10 +59,10 @@ vertex_ptr vertex_cofactor(vertex_ptr root, const std::string& var, bool value);
 bool evaluate_vertex(vertex_ptr root,const std::vector<std::string>& ord,std::vector<bool>& truthVector,int i);
 
 /// @brief Calculate vertex cofactor w.r.t. a variable
-/// @param root vertex to be co-factorize
+/// @param root vertex structure to be co-factorize
 /// @param var variable 
 /// @param value boolean value for the co-factorization
-/// @return pointer to vertex cofactor
+/// @return structure with cofactorized function and if it is complemented or not
 complemented_vertex vertex_cofactor_comp(complemented_vertex root, const std::string& var, bool value);
 
 /// @brief Support function for the truth table print

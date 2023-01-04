@@ -12,7 +12,6 @@ void initialize() {
 
 
 vertex_ptr old_or_new(const std::string& root, vertex_ptr lst, vertex_ptr rst){
-    
     vertex_ptr v;
     auto result = lookup(unique_table, root, lst, rst);
     if (result.has_value())
@@ -33,8 +32,8 @@ vertex_ptr old_or_new(const std::string& root, vertex_ptr lst, vertex_ptr rst){
     }
 }
 
+
 vertex_ptr old_or_new_comp(vertex_ptr root){
-    
     vertex_ptr v;
     auto result = lookup_comp(unique_table, root->root, root->lsubtree, root->rsubtree, root->complemented_l, root->complemented_r);
     if (result.has_value())
@@ -98,7 +97,7 @@ bool vertexare_comp(complemented_vertex vertex1,complemented_vertex vertex2){
         right2.complemented = vertex2.root->complemented_r;
 
 
-        return vertexare_comp(left1,left2) && vertexare_comp(right2,right2) && (vertex1.root->root == vertex2.root->root);
+        return vertexare_comp(left1,left2) && vertexare_comp(right1,right2) && (vertex1.root->root == vertex2.root->root);
     }
 }
 
@@ -219,13 +218,13 @@ vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std:
 }
 
 
-/// @brief 
-/// @param f 
-/// @param g 
-/// @param h 
-/// @param i 
-/// @param ord 
-/// @return 
+/// @brief recursive step for ite_comp procedure
+/// @param f structure for f function keeping track of complementation
+/// @param g structure for g function keeping track of complementation
+/// @param h structure for h function keeping track of complementation
+/// @param i counter for level of recursion
+/// @param ord vector for variable names
+/// @return structure that contains vertex_ptr to ite function and a var that says if it is complemented or not
 complemented_vertex apply_ite_comp_rec(complemented_vertex f, complemented_vertex g, complemented_vertex h,int i ,const std::vector<std::string>& ord){
      vertex_ptr l,r;
      std::string root;
@@ -241,7 +240,7 @@ complemented_vertex apply_ite_comp_rec(complemented_vertex f, complemented_verte
         }
     }
     //if both functions g and h are true, then return simply f
-    else if (g.root->root == "v1" && h.root->root == "v1" && g.complemented && !h.complemented){
+    else if (g.root->root == "v1" && h.root->root == "v1" && !g.complemented && h.complemented){
         return f;
     }
     else
@@ -288,13 +287,6 @@ vertex_ptr apply_ite_comp(vertex_ptr f, vertex_ptr g, vertex_ptr h,int i ,const 
     
 }
 
-
-/// @brief Check for the presence of a vertex in the unique table 
-/// @param unique_table table of vertexes
-/// @param root vertex root
-/// @param lst vertex left subtree
-/// @param rst vetex right subtree
-/// @return pointer to vertex if found, nothing otherwise
 std::optional<vertex_ptr> lookup(const std::vector<vertex_ptr>& unique_table, const std::string& root, vertex_ptr lst, vertex_ptr rst){
     for (auto& vertex : unique_table)
     {
@@ -303,15 +295,7 @@ std::optional<vertex_ptr> lookup(const std::vector<vertex_ptr>& unique_table, co
     }
     return std::nullopt;
 }
- 
-/// @brief Check for the presence of a vertex in the unique table 
-/// @param unique_table table of vertexes
-/// @param root vertex root
-/// @param lst vertex left subtree
-/// @param rst vetex right subtree
-/// @param lcomp is l subtree complemented?
-/// @param rcomp is r subtree complemented?
-/// @return pointer to vertex if found, nothing otherwise
+
 std::optional<vertex_ptr> lookup_comp(const std::vector<vertex_ptr>& unique_table, const std::string& root, vertex_ptr lst, vertex_ptr rst, bool lcomp, bool rcomp){
     for (auto& vertex : unique_table)
     {

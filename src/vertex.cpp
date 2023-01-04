@@ -2,11 +2,17 @@
 #include <sstream>
 #include <iostream>
 #include <queue>
-#include <cmath>
+#include <cmath> 
 #include "../include/vertex.hpp"
 
 int verbosity = 0;
 
+/// @brief support function for pretty printing the bdd 
+/// @param stream stream that contain the string to be printed
+/// @param prefix string created until now
+/// @param node pointer to node being manipulated at the moment
+/// @param isLeft is the node a left one
+/// @param cmp is the node complemented 
 void printBT(std::stringstream& stream ,const std::string& prefix, const vertex_ptr node, bool isLeft, bool cmp)
 {
     if (node != nullptr)
@@ -22,13 +28,11 @@ void printBT(std::stringstream& stream ,const std::string& prefix, const vertex_
     }
 }
 
-/// @brief Print bdd 
-/// @param vert root of the bdd
 void vertex::print(const vertex_ptr vert){
     std::stringstream stream;
     printBT(stream,"", vert, false, false);
     if(verbosity) std::cout<<"The format of the print is:\n[root]\n" <<" +[left-child]\n" <<" L[right-child]\n";
-    std::cout << stream.str() <<std::endl;
+    std::cout <<"\033[32m" << stream.str() << "\033[0m" <<std::endl;
 }
 
 
@@ -41,11 +45,6 @@ vertex::vertex(const std::string& name)
 vertex::vertex(const std::string& root, vertex_ptr l, vertex_ptr r, bool lcomp, bool rcomp) 
 : root{root}, lsubtree{l}, rsubtree{r} ,complemented_l{lcomp}, complemented_r{rcomp} {}
 
-/// @brief Calculate vertex cofactor w.r.t. a variable
-/// @param root vertex to be co-factorize
-/// @param var variable 
-/// @param value boolean value for the co-factorization
-/// @return pointer to vertex cofactor
 vertex_ptr vertex_cofactor(vertex_ptr root, const std::string& var, bool value){
     if(root->root == var)
     {
@@ -64,12 +63,51 @@ vertex_ptr vertex_cofactor(vertex_ptr root, const std::string& var, bool value){
     }
 }
 
-/// @brief Support function for the truth table print
-/// @param root vertex root
-/// @param ord order in which we want to evaluate 
-/// @param truthVector vector of bool values that is used to evaluate the variables 
-/// @param i depth index, used to choose the correct value from truthVector
-/// @return evaluation value for the function
+
+complemented_vertex vertex_cofactor_comp(complemented_vertex root, const std::string& var, bool value){
+    complemented_vertex result;
+    //if the variable to be eval is the root one, check if there is complementation
+    if(root.root->root == var)
+    {
+        if(value){
+            //if I'm evaluating the variable in root for positive value and left child is complemented, the result will be complemented
+            result.complemented = root.root->complemented_l;
+            result.root = root.root->lsubtree;
+            return result;
+        }else{
+            //if I'm evaluating the variable in root for positive value and right child is complemented, the result will be complemented
+            result.complemented = root.root->complemented_r;
+            result.root = root.root->rsubtree;
+            return result;
+        }
+    }
+    //I arrived at a leaf for root, so return root with its complementation
+    else if(root.root->root == "v1"){        
+        return root; 
+    }else
+    {
+        complemented_vertex left,right,l,r;
+        //if subtree to explore is complemented, propagate it in l
+        l.complemented = root.root->complemented_l;
+        l.root = root.root->lsubtree;
+        left = vertex_cofactor_comp(l, var, value);
+
+        //if subtree to explore is complemented, propagate it in r
+        r.complemented = root.root->complemented_r;
+        r.root = root.root->rsubtree;
+        right = vertex_cofactor_comp(r, var, value);
+        
+        //create the new vertex
+        result.root = root.root;
+        result.root->lsubtree = left.root;
+        result.root->rsubtree = right.root;
+        //keep the complementation according to previous cases 
+        result.root->complemented_l = left.complemented;
+        result.root->complemented_r = right.complemented;    
+        return result;
+    }
+}
+
 bool evaluate_vertex(vertex_ptr root,const std::vector<std::string>& ord,std::vector<bool>& truthVector,int i){
     //no further evaluation is needed
     if(root->root == "v0")
@@ -90,72 +128,6 @@ bool evaluate_vertex(vertex_ptr root,const std::vector<std::string>& ord,std::ve
     }
 }
 
-///
-complemented_vertex vertex_cofactor_comp(complemented_vertex root, const std::string& var, bool value){
-    complemented_vertex result;
-    //if the variable to be eval is the root one, check if there is complementation
-    if(root.root->root == var)
-    {
-        if(value){
-            //if we have an odd number of complementations -> root is complemented, if also left is complemented we can get rid of it 
-            if(root.root->complemented_l && result.complemented)
-                result.complemented = false;
-            //else if the root is not complemented but the left subtree is, we need to add complementation to the result
-            else if(!result.complemented && root.root->complemented_l)
-                result.complemented = true;
-            result.root = root.root->lsubtree;
-            return result;
-        }else{
-            //if we have an odd number of complementations -> root is complemented, if also left is complemented we can get rid of it 
-            if(root.root->complemented_r && result.complemented)
-                result.complemented = false;
-            //else if the root is not complemented but the right subtree is, we need to add complementation to the result
-            else if(!result.complemented && root.root->complemented_r)
-                result.complemented = true;
-            result.root = root.root->rsubtree;
-            return result;
-        }
-    }
-    //sono arrivato alla foglia 
-    else if(root.root->root == "v1"){        
-        return root; 
-    }else
-    {
-        complemented_vertex left,right,l,r;
-        //if subtree to explore is complemented, propagate it in l
-        if(root.root->complemented_l)
-            l.complemented = true;
-        else
-            l.complemented = false;
-        l.root = root.root->lsubtree;
-        left = vertex_cofactor_comp(l, var, value);
-
-        //if subtree to explore is complemented, propagate it in r
-        if(root.root->complemented_r)
-            r.complemented = true;
-        else  
-            l.complemented = false;
-
-        r.root = root.root->rsubtree;
-        right = vertex_cofactor_comp(r, var, value);
-        
-        //create the new vertex
-        result.root = root.root;
-        result.root->lsubtree = left.root;
-        result.root->rsubtree = right.root;
-        //keep the complementation according to previous cases 
-        result.root->complemented_l = left.complemented;
-        result.root->complemented_r = right.complemented;    
-        return result;
-    }
-}
-
-/// @brief Support function for the truth table print
-/// @param root vertex root
-/// @param ord order in which we want to evaluate 
-/// @param truthVector vector of bool values that is used to evaluate the variables 
-/// @param i depth index, used to choose the correct value from truthVector
-/// @return evaluation value for the function
 bool evaluate_vertex_comp(vertex_ptr root,const std::vector<std::string>& ord,std::vector<bool>& truthVector,int i){
     //no further evaluation is needed
     if(root->root == "v0")
