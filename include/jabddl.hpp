@@ -9,6 +9,7 @@
 #include <cmath>
 #include "vertex.hpp"
 #include "expr.hpp"
+#include "vertex.hpp"
 
 extern int verbosity;
 
@@ -83,29 +84,33 @@ vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& o
 ///@param lst left subtree.
 ///@param rst right subtree.       
 std::optional<vertex_ptr> lookup(const std::vector<vertex_ptr>& unique_table, const std::string& root, vertex_ptr lst, vertex_ptr rst);
-
-///@brief Given a vertex, it checks if it is present inside the unique table and returns it.
-///       It workds with complemented edges.
-///@param unique_table is a pointer to the unique table of vertices;
-///@param root is the pointer to the root of the vertex to analyse, 
-///@param lst left subtree.
-///@param rst right subtree.       
+ 
+/// @brief Check for the presence of a vertex in the unique table 
+/// @param unique_table table of vertexes
+/// @param root vertex root
+/// @param lst vertex left subtree
+/// @param rst vetex right subtree
+/// @param lcomp is l subtree complemented?
+/// @param rcomp is r subtree complemented?
+/// @return pointer to vertex if found, nothing otherwise  
 std::optional<vertex_ptr> lookup_comp(const std::vector<vertex_ptr>& unique_table, const std::string& root, vertex_ptr lst, vertex_ptr rst, bool lcomp, bool rcomp);
 
 ///@brief Given two vertex pointers, it compares them to enstablish if they're equal.
 ///@param vertex1 pointer to a vertex structure;
 ///@param vertex2 pointer to a vertex structure;       
-bool vertex_compare(vertex_ptr vertex1,vertex_ptr vertex2);
+bool vertexare(vertex_ptr vertex1,vertex_ptr vertex2);
 
-///@brief Given two vertex pointers, it compares them to enstablish if they're equal.
+///@brief Given two vertex pointers complemented, it compares them to enstablish if they're equal.
 ///@param vertex1 pointer to a vertex structure;
 ///@param vertex2 pointer to a vertex structure;       
-bool vertex_compare_comp(vertex_ptr vertex1,vertex_ptr vertex2);
+bool vertexare_comp(complemented_vertex vertex1,complemented_vertex vertex2);
 
 ///@brief Given three functions it apply ite procedue to obtain a new function = f*g + !f*h.
 ///@param f pointer to a vertex structure that represent f;
 ///@param g pointer to a vertex structure that represent g;       
 ///@param h pointer to a vertex structure that represent h;
+///@param i counter for level of recursion
+///@param ord vector for variable names
 vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std::vector<std::string>& ord);
 
 ///@brief Given three functions it apply ite procedue to obtain a new function = f*g + !f*h.
@@ -113,6 +118,8 @@ vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std:
 ///@param f pointer to a vertex structure that represent f;
 ///@param g pointer to a vertex structure that represent g;       
 ///@param h pointer to a vertex structure that represent h;
+///@param i counter for level of recursion
+///@param ord vector for variable names
 vertex_ptr apply_ite_comp(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std::vector<std::string>& ord);
 
 /// @brief Prints the unique table 

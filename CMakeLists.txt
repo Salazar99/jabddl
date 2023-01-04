@@ -28,4 +28,4 @@ add_executable(jabddl_test
  target_compile_options(jabddl PRIVATE -Wall -Wextra -Wpedantic)
  
  target_compile_features(jabddl_test PRIVATE cxx_std_17)   
- target_compile_options(jabddl_test PRIVATE -Wall -Wextra -Wpedantic)
+ target_compile_options(jabddl_test PRIVATE -g -Wall -Wextra -Wpedantic)
