@@ -98,12 +98,12 @@ std::optional<vertex_ptr> lookup_comp(const std::vector<vertex_ptr>& unique_tabl
 ///@brief Given two vertex pointers, it compares them to enstablish if they're equal.
 ///@param vertex1 pointer to a vertex structure;
 ///@param vertex2 pointer to a vertex structure;       
-bool vertexare(vertex_ptr vertex1,vertex_ptr vertex2);
+bool vertex_compare(vertex_ptr vertex1,vertex_ptr vertex2);
 
 ///@brief Given two vertex pointers complemented, it compares them to enstablish if they're equal.
 ///@param vertex1 pointer to a vertex structure;
 ///@param vertex2 pointer to a vertex structure;       
-bool vertexare_comp(complemented_vertex vertex1,complemented_vertex vertex2);
+bool vertex_compare_comp(complemented_vertex vertex1,complemented_vertex vertex2);
 
 ///@brief Given three functions it apply ite procedue to obtain a new function = f*g + !f*h.
 ///@param f pointer to a vertex structure that represent f;

@@ -54,7 +54,7 @@ vertex_ptr old_or_new_comp(vertex_ptr root){
     }
 }
 
-bool vertexare(vertex_ptr vertex1,vertex_ptr vertex2){
+bool vertex_compare(vertex_ptr vertex1,vertex_ptr vertex2){
     bool result = false;
     if((vertex1->root == "v0" && vertex2->root == "v0") || (vertex1->root == "v1" && vertex2->root == "v1"))
     {
@@ -66,12 +66,12 @@ bool vertexare(vertex_ptr vertex1,vertex_ptr vertex2){
     }
     else if(vertex1->root != "v0" && vertex2->root != "v1" && vertex1->root != "v1" && vertex2->root != "v0")
     {
-        result = vertexare(vertex1->lsubtree,vertex2->lsubtree) && vertexare(vertex1->rsubtree,vertex2->rsubtree) && (vertex1->root == vertex2->root);
+        result = vertex_compare(vertex1->lsubtree,vertex2->lsubtree) && vertex_compare(vertex1->rsubtree,vertex2->rsubtree) && (vertex1->root == vertex2->root);
     }
     return result;
 }
 
-bool vertexare_comp(complemented_vertex vertex1,complemented_vertex vertex2){
+bool vertex_compare_comp(complemented_vertex vertex1,complemented_vertex vertex2){
     //Base case
     if(vertex1.root->root == "v1" && vertex2.root->root == "v1" && vertex1.complemented == vertex2.complemented)
     {
@@ -97,7 +97,7 @@ bool vertexare_comp(complemented_vertex vertex1,complemented_vertex vertex2){
         right2.complemented = vertex2.root->complemented_r;
 
 
-        return vertexare_comp(left1,left2) && vertexare_comp(right1,right2) && (vertex1.root->root == vertex2.root->root);
+        return vertex_compare_comp(left1,left2) && vertex_compare_comp(right1,right2) && (vertex1.root->root == vertex2.root->root);
     }
 }
 
@@ -126,7 +126,7 @@ vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<std::string>& ord) {
         r = robdd_build(evaluate(r_copy.get(), ord[i], false), i+1, ord);
         if(verbosity == 2) std::cout<< "f valutata per: " << ord[i] <<" neagativo\n";
     
-        if(vertexare(l,r)/*l->lsubtree == r->lsubtree && l->rsubtree == r->rsubtree*/)
+        if(vertex_compare(l,r)/*l->lsubtree == r->lsubtree && l->rsubtree == r->rsubtree*/)
             return l;
         else return old_or_new(root,l,r);
         
@@ -183,7 +183,7 @@ vertex_ptr robdd_build_comp(expr_ptr f, int i, const std::vector<std::string>& o
         right.root = r;
         right.complemented = rcomp;
 
-        if(vertexare_comp(left,right)/*l->lsubtree == r->lsubtree && l->rsubtree == r->rsubtree*/)
+        if(vertex_compare_comp(left,right)/*l->lsubtree == r->lsubtree && l->rsubtree == r->rsubtree*/)
             return l;
         else{
             vertex_ptr res = std::make_shared<vertex>(root,l,r,lcomp,rcomp);
@@ -210,7 +210,7 @@ vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std:
         l = apply_ite(vertex_cofactor(f,ord[i],true),vertex_cofactor(g,ord[i],true),vertex_cofactor(h,ord[i],true),i+1,ord);
         r = apply_ite(vertex_cofactor(f,ord[i],false),vertex_cofactor(g,ord[i],false),vertex_cofactor(h,ord[i],false),i+1,ord);
         
-        if(vertexare(l,r))
+        if(vertex_compare(l,r))
             return l;
         else 
             return old_or_new(root,l,r);
@@ -258,7 +258,7 @@ complemented_vertex apply_ite_comp_rec(complemented_vertex f, complemented_verte
         new_vertex->rsubtree = right.root;
         res.complemented = false;
 
-        if(vertexare_comp(left,right))
+        if(vertex_compare_comp(left,right))
             return left;
         else{
             res.root = old_or_new_comp(new_vertex);
