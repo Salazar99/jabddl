@@ -93,12 +93,6 @@ void expr::print(const expr_ptr expr) {
     std::cout << stream.str() << std::endl;
 }
 
-
-/// @brief Evaluate given function
-/// @param root expression 
-/// @param var  variable to which evaluate
-/// @param value variable value for evaluation (T|F)
-/// @return pointer to evaluated expression
 expr_ptr evaluate(expr_ptr root, const std::string& var, bool value) {
     if(root->type == expr_type::Var && *root->var.name == var){
               if(value)
