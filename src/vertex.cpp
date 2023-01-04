@@ -128,18 +128,26 @@ bool evaluate_vertex(vertex_ptr root,const std::vector<std::string>& ord,std::ve
     }
 }
 
-bool evaluate_vertex_comp(vertex_ptr root,const std::vector<std::string>& ord,std::vector<bool>& truthVector,int i){
+bool evaluate_vertex_comp(complemented_vertex root,const std::vector<std::string>& ord,std::vector<bool>& truthVector,int i){
     //no further evaluation is needed
-    if(root->root == "v0")
+    if(root.root->root == "v1" && root.complemented)
         return false;
-    else if( root->root == "v1") 
+    else if( root.root->root == "v1" && !root.complemented) 
         return true;
     //We are matching the current variable to evaluate
-    else if(root->root == ord[i])
+    else if(root.root->root == ord[i])
     {    
-        if(truthVector[i] == true)
-           return evaluate_vertex_comp(root->lsubtree,ord,truthVector,i+1);
-        else return evaluate_vertex_comp(root->rsubtree,ord,truthVector,i+1);
+        complemented_vertex child;
+        if(truthVector[i] == true){
+            child.complemented = root.root->complemented_l;
+            child.root = root.root->lsubtree;
+            return evaluate_vertex_comp(child,ord,truthVector,i+1);
+        }
+        else{ 
+            child.complemented = root.root->complemented_r;
+            child.root = root.root->rsubtree;
+            return evaluate_vertex_comp(child,ord,truthVector,i+1);
+        }
     }
     //root is not v0 or v1 but current order var does not match --> try next variable in order
     else

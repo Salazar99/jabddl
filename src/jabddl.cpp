@@ -1,5 +1,7 @@
 #include "../include/jabddl.hpp"
 
+int complemented_mode = 0;
+
 namespace jabddl {
 
 //unique table to represent the vertices of all robdds
@@ -360,7 +362,14 @@ void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord){
     for(int i = 0; i < pow(2, ord.size())*(ord.size()+1); i = i + (ord.size()+1))
     {
         std::vector<bool> subtable = std::vector<bool>(truthTable.begin() + i, truthTable.begin() + i + ord.size() + 1);
-        truthTable[i+ord.size()] = evaluate_vertex(f,ord, subtable,0);
+        if(!complemented_mode){
+            truthTable[i+ord.size()] = evaluate_vertex(f,ord, subtable,0);
+        }else{
+            complemented_vertex f_c;
+            f_c.complemented = false;
+            f_c.root = f;    
+            truthTable[i+ord.size()] = evaluate_vertex_comp(f_c,ord, subtable, 0);
+        }
     }
 
     

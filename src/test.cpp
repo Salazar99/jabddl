@@ -1,7 +1,10 @@
 #include "../include/jabddl.hpp"
 #include<iostream>
 
+
 int main() {
+    complemented_mode = 1;
+
 //    f = x1 x2 + x1 x2' + x1' x2 + x1' x2'    ordine x1 x2
     std::cout << "\033[33m" << "Test #1" <<"\033[0m " <<std::endl;
 
@@ -290,6 +293,8 @@ int main() {
    std::cout << "Function k " << std::endl;
    k_nc = jabddl::apply_ite(f_vert_nc,g_vert_nc,h_vert_nc,0,order5);  
    vertex::print(k_nc); 
+
+   jabddl::print_truth_table(k, order5);
 
 return 0;
 }

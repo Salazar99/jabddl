@@ -2,7 +2,6 @@
 #include <iostream>
 void bash_help(); 
 
-
 int main(int argc, char **argv) {
     std::string inputFile;
     
@@ -32,22 +31,58 @@ int main(int argc, char **argv) {
            std::cout << "type -h for help!" <<std::endl;
            exit(-1);
         }
+        //default verbosity is 0 
         verbosity = 0;
+        //default complementation is 0 
+        complemented_mode = 0;
         inputFile = (std::string)argv[2];  
         break;
     case 4:
         //specifying -v means verbosity lvl 1, future updates could implemente different levels
         if((std::string)argv[1] == "-f"){
             if((std::string)argv[3] == "-v"){
+                complemented_mode = 0;
                 verbosity = 1;
                 inputFile = (std::string)argv[2]; 
                 break;
+            //specifying -c allows usage of complemented edges
+            }else if((std::string)argv[3] == "-c"){
+                complemented_mode = 1;
+                verbosity = 0;
+                inputFile = (std::string)argv[2]; 
+                break;
             }
-        }
+            else{
+                std::cout << "unexpected argument after file input!" <<std::endl;
+                std::cout << "type -h for help!" <<std::endl;
+                exit(-1);
+
+            }
+        }else{
            std::cout << "expected \"-f\" before input file" <<std::endl;
            std::cout << "type -h for help!" <<std::endl;
            exit(-1);
-        
+        }
+
+    case 5:
+        //specifying -v means verbosity lvl 1, -c allows usage of complemented edges
+        if((std::string)argv[1] == "-f"){
+            if(((std::string)argv[3] == "-v" && (std::string)argv[4] == "-c") || ((std::string)argv[4] == "-v" && (std::string)argv[3] == "-c")){
+                verbosity = 1;
+                complemented_mode = 0;
+                inputFile = (std::string)argv[2];
+                break;
+            }else{
+                std::cout << "unexpected argument after file input!" <<std::endl;
+                std::cout << "type -h for help!" <<std::endl;
+                exit(-1);
+            }
+        }else{
+           std::cout << "expected \"-f\" before input file" <<std::endl;
+           std::cout << "type -h for help!" <<std::endl;
+           exit(-1);
+        }
+
     default: 
         std::cout << "Too many arguments! type ./jabddl -h for help" <<std::endl;
         exit(-1);
@@ -73,7 +108,12 @@ int main(int argc, char **argv) {
     {
         jabddl::fun function = f.second;
         if(verbosity) std::cout << "Building BDD for function: " << function.func_name << std::endl << std::endl;
-        cntx.root_vertexes.insert(std::make_pair(function.func_name, jabddl::robdd_build(ite(function.ite_if,function.ite_then,function.ite_else),0,cntx.vars)));
+        if(!complemented_mode){
+            cntx.root_vertexes.insert(std::make_pair(function.func_name, jabddl::robdd_build(ite(function.ite_if,function.ite_then,function.ite_else),0,cntx.vars)));
+        }else{
+            cntx.root_vertexes.insert(std::make_pair(function.func_name, jabddl::robdd_build_comp(ite(function.ite_if,function.ite_then,function.ite_else),0,cntx.vars)));
+        }
+    
     }
 
     for(auto &f : cntx.root_vertexes){
@@ -95,7 +135,8 @@ void bash_help(){
     std::cout << "Usage:" << std::endl
     << "\"-f\": specify input file" <<std::endl
     << "\"-v\": program will print additional informations " <<std::endl <<std::endl
-    << "Use example: $ ./jabdd -f input.txt [-v]" <<std::endl <<std::endl
+    << "\"-c\": program will use complemented edges for constructing bdds " << std::endl << std::endl
+    << "Use example: $ ./jabdd -f input.txt [-v] [-c]" <<std::endl <<std::endl
     << "args in \"[]\" are optional" <<std::endl <<std::endl;
     exit(0);
 }

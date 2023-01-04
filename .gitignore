@@ -10,3 +10,6 @@ run.sh
 
 #Build folder
 build/
+
+#auto docs folder
+docs/
