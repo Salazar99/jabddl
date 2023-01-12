@@ -141,7 +141,7 @@ vertex_ptr robdd_build(expr_ptr f, int i, const std::vector<std::string>& ord) {
 
         auto r_copy = std::unique_ptr<expr>(copy_expr_rec(f));
         r = robdd_build(evaluate(r_copy.get(), ord[i], false), i+1, ord);
-        if(verbosity == 2) std::cout<< "f valutata per: " << ord[i] <<" neagativo\n";
+        if(verbosity == 2) std::cout<< "f valutata per: " << ord[i] <<" negativo\n";
     
         if(vertex_compare(l,r)/*l->lsubtree == r->lsubtree && l->rsubtree == r->rsubtree*/)
             return l;

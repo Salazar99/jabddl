@@ -18,7 +18,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 
 
 int main() {
-    complemented_mode = 1;
+    complemented_mode = 0;
 
 //    f = x1 x2 + x1 x2' + x1' x2 + x1' x2'    ordine x1 x2
     std::cout << "\033[33m" << "Test #1" <<"\033[0m " <<std::endl;
@@ -38,6 +38,7 @@ int main() {
 
     jabddl::vertex_ptr vertex = jabddl::robdd_build(function,0,order);
     vertex::print(vertex);
+    jabddl::print_truth_table(vertex, order);
 
 //    f = abc + b'd + c'd    ordine b c d a
     std::cout << "\033[33m" << "Test #2" <<"\033[0m " <<std::endl;
@@ -57,6 +58,7 @@ int main() {
 
     jabddl::vertex_ptr vertex1 = jabddl::robdd_build(function,0,order1);
     vertex::print(vertex1);
+    jabddl::print_truth_table(vertex1, order1);
 
 //    f = ab + cd + ef    ordine a b c d e f
 //                        ordine a c e b d f
@@ -74,7 +76,13 @@ int main() {
     jabddl::vertex_ptr vertex2 = jabddl::robdd_build(function,0,order2);
     jabddl::vertex_ptr vertex3 = jabddl::robdd_build(function,0,order3);
     vertex::print(vertex2);
+    
+    jabddl::print_truth_table(vertex2, order2);
+    
     vertex::print(vertex3);
+
+    jabddl::print_truth_table(vertex3, order3);
+
 
 //    f1 = b + c      ordine a b c
 //    f2 = a + b + c
@@ -85,6 +93,10 @@ int main() {
 
     jabddl::vertex_ptr vertex4 = jabddl::robdd_build(function_2,0,order4);
     vertex::print(vertex4);
+    
+    jabddl::print_truth_table(vertex4, order4);
+
+complemented_mode = 1;
 
 //    f = x1x2 + x1'x2 + x1x2'     ordine x1 x2, lati complementati
 //    g = x1 + x2   
@@ -110,12 +122,15 @@ int main() {
     std::cout << "Function f complemented" <<"\033[0m " <<std::endl;
     vertex::print(vertex_f_comp);
 
+    jabddl::print_truth_table(vertex_f_comp, order);
+
     std::cout << "Function g not complemented" <<"\033[0m " <<std::endl;
     vertex::print(vertex_g);
     
      std::cout << "Function g complemented" <<"\033[0m " <<std::endl;
     vertex::print(vertex_g_comp);
 
+    jabddl::print_truth_table(vertex_g_comp, order);
     
     std::cout << "Function h complemented" <<"\033[0m " <<std::endl;
     vertex::print(vertex_h);
@@ -145,10 +160,13 @@ int main() {
     
     std::cout << "Function f" << std::endl;
     vertex::print(f_vert);
+    jabddl::print_truth_table(f_vert,order5);
     std::cout << "Function g" << std::endl;
     vertex::print(g_vert);
+    jabddl::print_truth_table(g_vert,order5);
     std::cout << "Function h" << std::endl;
     vertex::print(h);
+    jabddl::print_truth_table(h,order5);
 
     std::cout << "Function f non comp" << std::endl;
     vertex::print(f_vert_nc);

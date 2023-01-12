@@ -17,6 +17,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 #include <iostream>
 #include <queue>
 #include <cmath> 
+#include "../include/jabddl.hpp"
 #include "../include/vertex.hpp"
 
 int verbosity = 0;
@@ -60,6 +61,8 @@ vertex::vertex(const std::string& root, vertex_ptr l, vertex_ptr r, bool lcomp, 
 : root{root}, lsubtree{l}, rsubtree{r} ,complemented_l{lcomp}, complemented_r{rcomp} {}
 
 vertex_ptr vertex_cofactor(vertex_ptr root, const std::string& var, bool value){
+    std::string root_str;
+    vertex_ptr lsubtree,rsubtree;
     if(root->root == var)
     {
         if(value)
@@ -71,9 +74,13 @@ vertex_ptr vertex_cofactor(vertex_ptr root, const std::string& var, bool value){
         return root; 
     else
     {
-        root->lsubtree = vertex_cofactor(root->lsubtree, var, value);
-        root->rsubtree = vertex_cofactor(root->rsubtree, var, value);
-        return root;
+        root_str = root->root;
+        lsubtree = vertex_cofactor(root->lsubtree, var, value);
+        rsubtree = vertex_cofactor(root->rsubtree, var, value);
+        
+        if(jabddl::vertex_compare(lsubtree,rsubtree))
+            return lsubtree;
+        else return jabddl::old_or_new(root_str,lsubtree,rsubtree);
     }
 }
 
@@ -118,7 +125,14 @@ complemented_vertex vertex_cofactor_comp(complemented_vertex root, const std::st
         //keep the complementation according to previous cases 
         result.root->complemented_l = left.complemented;
         result.root->complemented_r = right.complemented;    
-        return result;
+        
+        if(jabddl::vertex_compare_comp(left,right))
+            return left;
+        else{
+            vertex_ptr res = jabddl::old_or_new_comp(result.root);
+            result.root = res;
+            return result;
+        }
     }
 }
 
