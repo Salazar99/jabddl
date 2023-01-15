@@ -147,6 +147,10 @@ vertex_ptr apply_ite(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std:
 /// @return pointer to root vertex for ite procedure
 vertex_ptr apply_ite_comp(vertex_ptr f, vertex_ptr g, vertex_ptr h, int i ,const std::vector<std::string>& ord);
 
+/// @brief Takes in input a complemented edges vertex and propagate the complementation through the top
+/// @param root vertex_ptr on which to apply propagation
+complemented_vertex propagate_complemented(complemented_vertex root);
+
 /// @brief Prints the unique table 
 /// @param unique_table unique table of bdd nodes
 void print_table( std::vector<vertex_ptr> unique_table);

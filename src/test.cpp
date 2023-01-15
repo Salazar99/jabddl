@@ -109,6 +109,7 @@ complemented_mode = 1;
     expr_ptr function_h = expr::make_mul(x1_n,x2_n);
 
     jabddl::vertex_ptr vertex_f_comp = jabddl::robdd_build_comp(function_f,0,order);
+   
     jabddl::vertex_ptr vertex_f = jabddl::robdd_build(function_f,0,order);
     
     jabddl::vertex_ptr vertex_g_comp = jabddl::robdd_build_comp(function_g,0,order);
@@ -152,7 +153,19 @@ complemented_mode = 1;
     jabddl::vertex_ptr f_vert = jabddl::robdd_build_comp(f,0,order5);
     jabddl::vertex_ptr g_vert = jabddl::robdd_build_comp(g,0,order5);
     jabddl::vertex_ptr h = jabddl::apply_ite_comp(f_vert,g_vert,jabddl::v1,0,order5);
-    
+    complemented_vertex fun;
+    fun.complemented = false;
+    fun.root = h;
+    complemented_vertex h_prop =  jabddl::propagate_complemented(fun);
+
+    std::cout <<"Function h complemented after propagation" << std::endl;
+    if(h_prop.complemented)
+        std::cout << "Function is complemented" <<std::endl;
+    vertex::print(h_prop.root);
+
+
+
+
     jabddl::vertex_ptr f_vert_nc = jabddl::robdd_build(f,0,order5);
     jabddl::vertex_ptr g_vert_nc = jabddl::robdd_build(g,0,order5);
     jabddl::vertex_ptr h_nc = jabddl::apply_ite(f_vert_nc,g_vert_nc,jabddl::v1,0,order5);

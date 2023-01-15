@@ -304,6 +304,59 @@ vertex_ptr apply_ite_comp(vertex_ptr f, vertex_ptr g, vertex_ptr h,int i ,const 
     
 }
 
+complemented_vertex propagate_complemented(complemented_vertex root){
+    
+    //First we need to arrive at the leaves
+    if(root.root->root == "v1")
+        return root;
+
+    else{
+        complemented_vertex l,r,left,right;
+        l.root = root.root->lsubtree;
+        l.complemented = root.root->complemented_l;
+        r.root = root.root->rsubtree;
+        r.complemented = root.root->complemented_r;
+
+        left =  propagate_complemented(l);
+        right = propagate_complemented(r);
+
+        //At this point we need to evaluate how to propagate the complementation, modifying this level and the bottom one as well.
+        if(root.complemented && left.complemented){
+            root.complemented = false;
+            root.root->lsubtree = left.root;
+            root.root->rsubtree = right.root;
+            root.root->complemented_l = false;
+            root.root->complemented_r = true;
+            return root;
+        }
+        else if(left.complemented && !root.complemented){
+            root.complemented = true;
+            root.root->lsubtree = left.root;
+            root.root->rsubtree = right.root;
+            root.root->complemented_l = false;
+            root.root->complemented_r = true;
+            return root;
+        }
+        else if(root.complemented && left.complemented && right.complemented){
+            root.complemented = false;
+            root.root->lsubtree = left.root;
+            root.root->rsubtree = right.root;
+            root.root->complemented_l = false;
+            root.root->complemented_r = false;
+            return root;
+        }
+        else{
+            root.root->lsubtree = left.root;
+            root.root->rsubtree = right.root;
+            root.root->complemented_l = left.complemented;
+            root.root->complemented_r = right.complemented;
+            return root;
+        }
+    }
+}
+
+
+
 std::optional<vertex_ptr> lookup(const std::vector<vertex_ptr>& unique_table, const std::string& root, vertex_ptr lst, vertex_ptr rst){
     for (auto& vertex : unique_table)
     {
