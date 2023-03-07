@@ -4,7 +4,7 @@ project(jabddl
         DESCRIPTION "A library to manage BDDs"
         LANGUAGES CXX
 )
-add_executable(jabddl
+add_executable(Release
 
     include/jabddl.hpp
     src/jabddl.cpp
@@ -24,8 +24,8 @@ add_executable(jabddl_test
     src/expr.cpp
     src/test.cpp)
 
- target_compile_features(jabddl PRIVATE cxx_std_17)   
- target_compile_options(jabddl PRIVATE -Wall -Wextra -Wpedantic)
+ target_compile_features(Release PRIVATE cxx_std_17)   
+ target_compile_options(Release PRIVATE -Wall -Wextra -Wpedantic)
  
  target_compile_features(jabddl_test PRIVATE cxx_std_17)   
  target_compile_options(jabddl_test PRIVATE -g -Wall -Wextra -Wpedantic)

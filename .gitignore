@@ -2,8 +2,8 @@
 jabddl
 #input file
 input.txt
-#run script 
-run.sh
+#clean script
+clean.sh
 
 #VS code config 
 .vscode/
