@@ -14,8 +14,8 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 */
 
 #include "../include/jabddl.hpp"
-#include<iostream>
-
+#include <iostream>
+#include "../include/dot.hpp"
 
 int main() {
     complemented_mode = 0;
@@ -164,6 +164,9 @@ complemented_mode = 1;
     vertex::print(h_prop.root);
 
 
+    std::string const filename = "test7.dot";
+    
+    jabddl::dump_dot(h_prop, filename.c_str() );
 
 
     jabddl::vertex_ptr f_vert_nc = jabddl::robdd_build(f,0,order5);

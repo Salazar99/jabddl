@@ -22,6 +22,8 @@ add_executable(jabddl_test
     src/vertex.cpp
     include/expr.hpp
     src/expr.cpp
+    include/dot.hpp
+    src/dot.cpp
     src/test.cpp)
 
  target_compile_features(Release PRIVATE cxx_std_17)   
