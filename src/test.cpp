@@ -163,9 +163,7 @@ complemented_mode = 1;
         std::cout << "Function is complemented" <<std::endl;
     vertex::print(h_prop.root);
 
-
     std::string const filename = "test7.dot";
-    
     jabddl::dump_dot(h_prop, filename.c_str() );
 
 
@@ -230,6 +228,16 @@ complemented_mode = 1;
     std::cout << "Function ite(f,g,h) comp" << std::endl;
     vertex_ptr k = jabddl::apply_ite_comp(f_vert,g_vert,h,0,order5);
     vertex::print(k);
+
+    fun.complemented = false;
+    fun.root = k;
+
+    //Propagating complementation 
+    complemented_vertex k_prop = jabddl::propagate_complemented(fun);
+
+    //Printing of .dot file
+    std::string const filename1 = "test8.dot";
+    jabddl::dump_dot(k_prop, filename1.c_str());
 
     std::cout << "Function ite(f,g,h) " << std::endl;
     vertex_ptr k_nc = jabddl::apply_ite(f_vert_nc,g_vert_nc,h_nc,0,order5);
