@@ -5,6 +5,11 @@
 
 //to print graph once obtained .dot : dot -Tpng filename.dot -o outfile.png
 
+//normal arrow edge = left child
+//dotted black edge = complemented left child
+//dashed black edge = right child
+//red dotted edge = complemented right child
+
 namespace jabddl{
     const int mask = 0xFFFFFF;   
 
@@ -12,7 +17,7 @@ namespace jabddl{
         file <<"\"" << (void *)(((std::uintptr_t)root.get())) << "\"" << "[label =" << root->root << "];\n" ; 
         visited.push_back((std::uintptr_t)root.get());
 
-        if(root->root == "v1"){}
+        if(root->root == "v1" || root->root =="v0"){}
         else{
                 //write on dot file for left child, if complemented edge is dotted
                 file <<"\t" <<"\"" << (void *)(((std::uintptr_t)root.get())) << "\"" " -> " << "\"" << (void *)(((std::uintptr_t)root->lsubtree.get())) <<"\"";
@@ -30,7 +35,7 @@ namespace jabddl{
                 file <<"\t" <<"\"" << (void *)(((std::uintptr_t)root.get())) << "\"" "-> " << "\"" << (void *)(((std::uintptr_t)root->rsubtree.get())) << "\"";
                 //file << "[label = \"" << (void *)(((std::uintptr_t)root->rsubtree.get()) & jabddl::mask) << "\"]";
                 if(root->complemented_r)
-                    file << "[style = dotted];\n" <<"\tedge [color = red];\n";
+                    file << "[style = dotted] " <<"\t[color = red];\n";
                 else{
                     file << "[style = dashed];\n";
                 }
@@ -49,8 +54,8 @@ namespace jabddl{
         //Store already encountered node to prevent adding them twice
         std::vector<std::uintptr_t> visited;
 
-        file <<  "digraph G {\n\tinput [shape=box];\n";
-        file << "\tinput -> " <<"\"" << (void *)(((std::uintptr_t)root.root.get())) << "\"";
+        file <<  "digraph G {\n\tOutput [shape=box];\n";
+        file << "\tOutput -> " <<"\"" << (void *)(((std::uintptr_t)root.root.get())) << "\"";
         visited.push_back((((std::uintptr_t)root.root.get())));
         //file << "[label = \"" << (void *)(((std::uintptr_t)root.root.get()) & jabddl::mask) << "\"]";
         if(root.complemented)

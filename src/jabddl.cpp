@@ -311,45 +311,74 @@ complemented_vertex propagate_complemented(complemented_vertex root){
         return root;
 
     else{
-        complemented_vertex l,r,left,right;
+        complemented_vertex l,r,left,right, ph;
+        vertex_ptr v = std::make_shared<vertex>(root.root->root);
+        ph.root = v;
+
         l.root = root.root->lsubtree;
         l.complemented = root.root->complemented_l;
         r.root = root.root->rsubtree;
         r.complemented = root.root->complemented_r;
 
-        left =  propagate_complemented(l);
         right = propagate_complemented(r);
-
+        left =  propagate_complemented(l);
         //At this point we need to evaluate how to propagate the complementation, modifying this level and the bottom one as well.
-        if(root.complemented && left.complemented){
-            root.complemented = false;
-            root.root->lsubtree = left.root;
-            root.root->rsubtree = right.root;
-            root.root->complemented_l = false;
-            root.root->complemented_r = true;
-            return root;
-        }
-        else if(left.complemented && !root.complemented){
+        if(!root.complemented && left.complemented && right.complemented){
             root.complemented = true;
-            root.root->lsubtree = left.root;
-            root.root->rsubtree = right.root;
-            root.root->complemented_l = false;
-            root.root->complemented_r = true;
+            ph.root->lsubtree = left.root;
+            ph.root->rsubtree = right.root;
+            ph.root->complemented_l = false;
+            ph.root->complemented_r = false;
+            
+            vertex_ptr vrt = jabddl::old_or_new_comp(ph.root);
+            root.root = vrt;
             return root;
         }
         else if(root.complemented && left.complemented && right.complemented){
             root.complemented = false;
-            root.root->lsubtree = left.root;
-            root.root->rsubtree = right.root;
-            root.root->complemented_l = false;
-            root.root->complemented_r = false;
+            ph.root->lsubtree = left.root;
+            ph.root->rsubtree = right.root;
+            ph.root->complemented_l = false;
+            ph.root->complemented_r = false;
+            
+            vertex_ptr vrt = jabddl::old_or_new_comp(ph.root);
+            root.root = vrt;
+
+            return root;
+        }
+        else if(root.complemented && left.complemented){
+            root.complemented = false;
+            ph.root->lsubtree = left.root;
+            ph.root->rsubtree = right.root;
+            ph.root->complemented_l = false;
+            ph.root->complemented_r = true;
+            
+            vertex_ptr vrt = jabddl::old_or_new_comp(ph.root);
+            root.root = vrt;
+
+            return root;
+        }
+        else if(left.complemented && !root.complemented){
+            root.complemented = true;
+            ph.root->lsubtree = left.root;
+            ph.root->rsubtree = right.root;
+            ph.root->complemented_l = false;
+            ph.root->complemented_r = true;
+            
+            vertex_ptr vrt = jabddl::old_or_new_comp(ph.root);
+            root.root = vrt;
+
             return root;
         }
         else{
-            root.root->lsubtree = left.root;
-            root.root->rsubtree = right.root;
-            root.root->complemented_l = left.complemented;
-            root.root->complemented_r = right.complemented;
+            ph.root->lsubtree = left.root;
+            ph.root->rsubtree = right.root;
+            ph.root->complemented_l = left.complemented;
+            ph.root->complemented_r = right.complemented;
+            
+            vertex_ptr vrt = jabddl::old_or_new_comp(ph.root);
+            root.root = vrt;
+
             return root;
         }
     }
