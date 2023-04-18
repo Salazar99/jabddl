@@ -582,7 +582,7 @@ complemented_mode = 1;
     vertex_ptr k_nc = jabddl::apply_ite(f_vert_nc,g_vert_nc,h_vert_nc,0,order5);  
     vertex::print(k_nc); 
 
-    jabddl::print_truth_table(k, order5);
+    jabddl::print_truth_table(k, order5,fun.complemented);
 
 #endif
 return 0;

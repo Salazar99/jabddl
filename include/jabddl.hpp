@@ -57,9 +57,11 @@ struct context{
     /// @brief vector of variables
     std::vector<std::string> vars;
     /// @brief map of declared functions
-    std::unordered_map<std::string, jabddl::fun> funcs;
+    std::map<std::string, jabddl::fun> funcs;
     /// @brief map to store bdd corresponding to functions
     std::unordered_map<std::string, jabddl::vertex_ptr> root_vertexes;
+    /// @brief map to store bdds for complemented edges mode
+    std::unordered_map<std::string, complemented_vertex > root_vertexes_comp;
 };
 
 /// @brief 0 leaf for unique table
@@ -158,7 +160,7 @@ void print_table( std::vector<vertex_ptr> unique_table);
 /// @brief print the truth table for function f, given order of construction ord (be careful to use same order used for bdd construction otherwise if will fail)
 /// @param f function to evaluate 
 /// @param ord order of variables for f 
-void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord);
+void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord,bool complemented);
 
 /// @brief Function to parse input file
 /// @param file Filename

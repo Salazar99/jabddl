@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
         if((std::string)argv[1] == "-f"){
             if(((std::string)argv[3] == "-v" && (std::string)argv[4] == "-c") || ((std::string)argv[4] == "-v" && (std::string)argv[3] == "-c")){
                 verbosity = 1;
-                complemented_mode = 0;
+                complemented_mode = 1;
                 inputFile = (std::string)argv[2];
                 break;
             }else{
@@ -126,23 +126,41 @@ int main(int argc, char **argv) {
         if(!complemented_mode){
             cntx.root_vertexes.insert(std::make_pair(function.func_name, jabddl::robdd_build(ite(function.ite_if,function.ite_then,function.ite_else),0,cntx.vars)));
         }else{
-            cntx.root_vertexes.insert(std::make_pair(function.func_name, jabddl::robdd_build_comp(ite(function.ite_if,function.ite_then,function.ite_else),0,cntx.vars)));
-        }
-    
-    }
-
-    for(auto &f : cntx.root_vertexes){
-        if(cntx.funcs[f.first].tbp){
-            std::cout << "Function: " << f.first << std::endl;
-            vertex::print(f.second);
-            std::cout << std::endl << std::endl;
-
-            std::cout << "Truth table for function: " << f.first << std::endl;
-            jabddl::print_truth_table(f.second, cntx.vars);
-            std::cout << std::endl << std::endl;
+            //Create the complemented_vertex structure to insert in context
+            complemented_vertex fun;
+            fun.complemented = false;
+            fun.root = jabddl::robdd_build_comp(ite(function.ite_if,function.ite_then,function.ite_else),0,cntx.vars);
+            //Insert complemented_vertex in cntx map
+            cntx.root_vertexes_comp.insert(std::make_pair(function.func_name, jabddl::propagate_complemented(fun)));
         }
     }
 
+    if(complemented_mode){
+        for(auto &f : cntx.root_vertexes_comp){
+            if(cntx.funcs[f.first].tbp){
+                std::cout << "Function: " << f.first << std::endl;
+                std::cout << (f.second.complemented?"!":"") << std::endl;
+                vertex::print(f.second.root);
+                std::cout << std::endl << std::endl;
+
+                std::cout << "Truth table for function: " << f.first << std::endl;
+                jabddl::print_truth_table(f.second.root, cntx.vars,f.second.complemented);
+                std::cout << std::endl << std::endl;
+            }
+        }
+    }else{
+        for(auto &f : cntx.root_vertexes){
+            if(cntx.funcs[f.first].tbp){
+                std::cout << "Function: " << f.first << std::endl;
+                vertex::print(f.second);
+                std::cout << std::endl << std::endl;
+
+                std::cout << "Truth table for function: " << f.first << std::endl;
+                jabddl::print_truth_table(f.second, cntx.vars,false);
+                std::cout << std::endl << std::endl;
+            }
+        }
+    }
     return 0;
 }
 

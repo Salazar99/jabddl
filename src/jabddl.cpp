@@ -429,7 +429,7 @@ void print_table(std::vector<vertex_ptr> unique_table){
     }
 }
 
-void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord){
+void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord, bool complemented){
     printf("\nTruth table for the function: \n\n");
 
     std::vector<bool> truthTable(pow(2, ord.size())*(ord.size()+1),false);
@@ -446,7 +446,7 @@ void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord){
         {
 
             bool value = (bits >> j) & 0b1;
-            truthTable[i * (ord.size()+1) + j] = value;
+            truthTable[i * (ord.size()+1) + j] = (complemented?value:!value);
             //printf("%05s", value ? "T" : "F");
 
         }
@@ -493,8 +493,8 @@ void print_truth_table(vertex_ptr f, const std::vector<std::string>& ord){
 /// @param cntx context object to be populated
 /// @return expression representing the ite_part 
 jabddl::expr_ptr parse_ite_parts(std::string ite_part, jabddl::context &cntx){
-    std::regex p_const("\\s*([0-1])"), p_var("\\s*([a-z][0-9])"), p_fun("F[0-9]"), p_f_op("(F[0-9]\\+F[0-9])+|(F[0-9]\\-F[0-9])+|(F[0-9]\\+[a-z][0-9])+|(F[0-9]\\-[a-z][0-9])+|(F[0-9]\\+[0-1])+|(F[0-9]\\-[0-1])+"),
-               p_op("(F[0-9])|(\\-|\\+)|([a-z][0-9])"), p_negvar("\\s*(\\![a-z][0-9])");
+    std::regex p_const("\\s*([0-1])"), p_var("\\s*([a-z][0-9]?)"), p_fun("F[0-9]"), p_f_op("(F[0-9]\\+F[0-9])+|(F[0-9]\\-F[0-9])+|(F[0-9]\\+[a-z][0-9]?)+|(F[0-9]\\-[a-z][0-9]?)+|(F[0-9]\\+[0-1])+|(F[0-9]\\-[0-1])+"),
+               p_op("(F[0-9])|(\\-|\\+)|([a-z][0-9]?)"), p_negvar("\\s*(\\![a-z][0-9]?)");
     std::smatch match_obj;
 
     if(verbosity) std::cout << "Beginning parsing of: " << ite_part << std::endl;
@@ -614,19 +614,21 @@ jabddl::expr_ptr parse_ite_parts(std::string ite_part, jabddl::context &cntx){
 /// @param line_expr string that represent ite expr
 /// @param cntx context object to store variable and functions
 void parse_func(jabddl::fun &func, std::string line_expr, jabddl::context &cntx){
-    std::regex p_v_name("(F[0-9]\\+F[0-9])+|(F[0-9]\\-F[0-9])+|(F[0-9]\\+[a-z][0-9])+|(F[0-9]\\-[a-z][0-9])+|(F[0-9]\\+[0-1])+|(F[0-9]\\-[0-1])+|([a-z][0-9])+|([0-1])+|(F[0-9])+");
-    std::regex p_const("[0-1]"), p_var("[a-z][0-9]"), p_fun("F[0-9]"), p_f_op("(F[0-9]\\+F[0-9])+|(F[0-9]\\-F[0-9])+|(F[0-9]\\+[a-z][0-9])+|(F[0-9]\\-[a-z][0-9])+|(F[0-9]\\+[0-1])+|(F[0-9]\\-[0-1])+");
+    std::regex p_v_name("(F[0-9]\\+F[0-9])+|(F[0-9]\\-F[0-9])+|(F[0-9]\\+[a-z][0-9]?)+|(F[0-9]\\-[a-z][0-9]?)+|(F[0-9]\\+[0-1])+|(F[0-9]\\-[0-1])+|(\\!?[a-z][0-9]?)+|([0-1])+|(F[0-9])+");
+    std::regex p_const("[0-1]"), p_var("[a-z][0-9]?"), p_fun("F[0-9]"), p_f_op("(F[0-9]\\+F[0-9])+|(F[0-9]\\-F[0-9])+|(F[0-9]\\+[a-z][0-9]?)+|(F[0-9]\\-[a-z][0-9]?)+|(F[0-9]\\+[0-1])+|(F[0-9]\\-[0-1])+");
     std::smatch part;
     
     std::string ite_if,ite_then,ite_else;
     if(verbosity) std::cout << "Beginning parsing of function: " << func.func_name <<std::endl;
 
-    for(int c = 0; c < 3 ; c++){
+    //need to cycle 4 times because ite is an [a-z] so it is matched as a viable token
+    for(int c = 0; c < 4 ; c++){
         if(std::regex_search(line_expr,part,p_v_name)){
             switch(c){
-                case 0: ite_if = part.str(); break;
-                case 1: ite_then = part.str(); break;
-                case 2: ite_else = part.str(); break;
+                case 0: break;
+                case 1: ite_if = part.str(); break;
+                case 2: ite_then = part.str(); break;
+                case 3: ite_else = part.str(); break;
                 default: std::cout << "Error in parsing ITE body!!" <<std::endl;
                          exit(-1);
             };
@@ -662,9 +664,9 @@ void parse_input(std::string file, jabddl::context &cntx){
     jabddl::fun func_token;
 
     //template for variables and functions name
-    std::regex p_v_name("([a-z][0-9])+"), p_fname("F[0-9]+"), p_print("print F[0-9]+");
+    std::regex p_v_name("([a-z][0-9]?)+"), p_fname("F[0-9]+"), p_print("print F[0-9]+");
     //template for ite 
-    std::regex p_expr("ite\\(((,?\\s*[a-z][0-9])+|(,?\\s*[0-1])+|(,?\\s*F[0-9]\\+[a-z]*[0-9])+|(,?\\s*F[0-9]\\-[a-z]*[0-9])+|(,?\\s*F[0-9])+)+\\)");
+    std::regex p_expr("ite\\(((,?\\s*\\!?[a-z][0-9]?)+|(,?\\s*[0-1])+|(,?\\s*F[0-9]\\+[a-z][0-9]?)+|(,?\\s*F[0-9]\\-[a-z][0-9]?)+|(,?\\s*F[0-9]\\-[0-1])+|(,?\\s*F[0-9]\\+[0-1])+|(,?\\s*F[0-9])+)+\\)");
 
     std::smatch var,func, expr_parse,print;
 
